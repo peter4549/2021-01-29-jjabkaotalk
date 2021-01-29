@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "827917885830",
+    "project_id": "jjabkaotalk",
+    "storage_bucket": "jjabkaotalk.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827917885830:android:b78eb5dcd0f8df9e340c07",
+        "android_client_info": {
+          "package_name": "com.grand.duke.elliot.jjabkaotalk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "827917885830-0e7ctecgvpgcgabc434oll3glamm3kd9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.grand.duke.elliot.jjabkaotalk",
+            "certificate_hash": "8bbbd93c77c7901a13734f84668d04f13696d094"
+          }
+        },
+        {
+          "client_id": "827917885830-rmoo0lj6mr81fnsjohtdke19usnvogdj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyaGoFTrx6PO5Bt9Os4Xmtax0XxggA5Zg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "827917885830-rmoo0lj6mr81fnsjohtdke19usnvogdj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

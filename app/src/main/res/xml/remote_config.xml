@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry>
+        <key>version_name</key>
+        <value>1.0.0</value>
+    </entry>
+    <entry>
+        <key>notification_title</key>
+        <value>Title</value>
+    </entry>
+    <entry>
+        <key>notification_message</key>
+        <value>Message</value>
+    </entry>
+</defaultsMap>
