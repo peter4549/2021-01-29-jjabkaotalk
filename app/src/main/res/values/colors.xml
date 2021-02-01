@@ -33,4 +33,7 @@
     <color name="box_background">@color/light_blue_200</color>
     <color name="box_stroke">@color/light_blue_200</color>
 
+    <color name="tab_icon_selected">@color/black</color>
+    <color name="tab_icon_unselected">@color/grey_500</color>
+
 </resources>

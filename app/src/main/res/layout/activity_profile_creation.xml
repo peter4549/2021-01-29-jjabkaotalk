@@ -61,13 +61,13 @@
                 </RelativeLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                     android:id="@+id/textInputLayout_name"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/spacing_medium"
                     android:layout_marginStart="@dimen/spacing_medium"
                     android:layout_marginTop="@dimen/spacing_large"
+                    android:layout_marginEnd="@dimen/spacing_medium"
                     android:gravity="center_vertical"
                     android:hint="@string/name"
                     app:boxBackgroundColor="@color/box_background"
@@ -98,6 +98,17 @@
                         app:layout_constraintStart_toStartOf="parent" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <cdflynn.android.library.checkview.CheckView
+                    android:id="@+id/checkView"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    app:checkView_strokeColor="@color/green"
+                    app:checkView_strokeWidth="@dimen/check_stroke_width"
+                    app:layout_constraintBottom_toBottomOf="@+id/button_verification"
+                    app:layout_constraintEnd_toStartOf="@+id/button_verification"
+                    app:layout_constraintTop_toTopOf="@+id/button_verification" />
+
+
                 <Button
                     android:id="@+id/button_verification"
                     android:layout_width="wrap_content"
@@ -107,6 +118,36 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/textInputLayout_name" />
+
+                <LinearLayout
+                    android:id="@+id/linearLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing_medium"
+                    android:layout_marginTop="@dimen/spacing_medium_large"
+                    android:layout_marginEnd="@dimen/spacing_medium"
+                    android:gravity="center"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/button_verification">
+
+                    <Button
+                        android:id="@+id/button_cancel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/spacing_small"
+                        android:layout_weight="1"
+                        android:text="@string/cancel" />
+
+                    <Button
+                        android:id="@+id/button_complete"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_small"
+                        android:layout_weight="1"
+                        android:text="@string/complete" />
+
+                </LinearLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.core.widget.NestedScrollView>
     </FrameLayout>

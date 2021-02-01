@@ -20,6 +20,8 @@
     <dimen name="text_size_large">18sp</dimen>
     <dimen name="text_size_extra_large">20sp</dimen>
 
-    <dimen name="simple_item_image_width">56dp</dimen>
-    <dimen name="simple_item_image_height">56dp</dimen>
+    <dimen name="simple_item_image_width">32dp</dimen>
+    <dimen name="simple_item_image_height">32dp</dimen>
+
+    <dimen name="check_stroke_width">2dp</dimen>
 </resources>

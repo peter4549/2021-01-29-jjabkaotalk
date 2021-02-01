@@ -1,15 +1,12 @@
 package com.grand.duke.elliot.jjabkaotalk.main
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.FirebaseException
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.gson.Gson
-import com.grand.duke.elliot.jjabkaotalk.data.User
-import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
-import org.json.JSONObject
-import timber.log.Timber
-import java.lang.NullPointerException
+import com.grand.duke.elliot.jjabkaotalk.R
 
 class MainViewModel: ViewModel() {
-    val fireStoreHelper = FireStoreHelper()
+    val tabIconDrawableIds = arrayOf(
+        R.drawable.ic_communication_48px,
+        R.drawable.ic_speech_bubble_48,
+        R.drawable.ic_round_person_24
+    )
 }

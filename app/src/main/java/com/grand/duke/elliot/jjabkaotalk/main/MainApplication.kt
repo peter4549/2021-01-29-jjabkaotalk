@@ -5,6 +5,7 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.grand.duke.elliot.jjabkaotalk.R
+import com.grand.duke.elliot.jjabkaotalk.data.User
 import timber.log.Timber
 
 class MainApplication: Application() {
@@ -37,5 +38,7 @@ class MainApplication: Application() {
                 return instance
             }
         }
+
+        var user: User? = null
     }
 }

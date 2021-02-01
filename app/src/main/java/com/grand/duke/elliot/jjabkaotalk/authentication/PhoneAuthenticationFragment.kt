@@ -22,13 +22,21 @@ class PhoneAuthenticationFragment: BaseFragment() {
 
     private lateinit var viewModel: PhoneAuthenticationViewModel
     private lateinit var binding: FragmentPhoneAutenticationBinding
+    private var onVerifiedListener: OnVerifiedListener? = null
 
-    interface OnClickListener {
-        //fun onPositiveButtonClick(folder: Folder)
+    interface OnVerifiedListener {
+        fun onVerified()
     }
 
     interface FragmentContainer {
-        fun onRequestOnClickListener(): OnClickListener?
+        fun onRequestOnVerifiedListener(): OnVerifiedListener?
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        if (context is FragmentContainer)
+            onVerifiedListener = context.onRequestOnVerifiedListener()
     }
 
     override fun onCreateView(
@@ -109,6 +117,7 @@ class PhoneAuthenticationFragment: BaseFragment() {
         if (viewModel.smsCode == code) {
             // TODO 인증성공
             showToast("인증성공 in verifyCode: smsCode:${viewModel.smsCode},, code: $code")
+            onVerifiedListener?.onVerified()
         } else {
             // 인증실패
             showToast("인증실패.. in verifyCode: smsCode:${viewModel.smsCode},, code: $code")

@@ -1,45 +1,21 @@
 package com.grand.duke.elliot.jjabkaotalk.data
 
 import android.os.Parcelable
+import com.grand.duke.elliot.jjabkaotalk.util.blank
 import kotlinx.android.parcel.Parcelize
 
 @Parcelize
 data class User (
     val uid: String,
     var name: String,
-    var profilePhotoUri: String?,
+    var profilePhotoUris: MutableList<String>,
     var location: String,
-    var friends: Array<String>, // TODO, check, is able to be list? (mutable..)
-    var chatRooms: Array<Long>, // TODO, check, is able to be list?
+    var friends: MutableList<String>, // TODO, check, is able to be list? (mutable..)
+    var chatRooms: MutableList<Long>, // TODO, check, is able to be list?
+    var openChatRooms: MutableList<Long>,
+    var pushToken: String = blank,
     var verified: Boolean
 ): Parcelable {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as User
-
-        if (uid != other.uid) return false
-        if (name != other.name) return false
-        if (profilePhotoUri != other.profilePhotoUri) return false
-        if (location != other.location) return false
-        if (!friends.contentEquals(other.friends)) return false
-        if (!chatRooms.contentEquals(other.chatRooms)) return false
-        if (verified != other.verified) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = uid.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + (profilePhotoUri?.hashCode() ?: 0)
-        result = 31 * result + location.hashCode()
-        result = 31 * result + friends.contentHashCode()
-        result = 31 * result + chatRooms.contentHashCode()
-        result = 31 * result + verified.hashCode()
-        return result
-    }
 
     companion object {
         const val FIELD_UID = "uid"

@@ -54,6 +54,7 @@ class SimpleListDialogFragment: DialogFragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+
         if (context is FragmentContainer) {
             onItemSelectedListener = context.onRequestOnItemSelectedListener()
             onScrollReachedBottomListener = context.onRequestOnScrollReachedBottom()

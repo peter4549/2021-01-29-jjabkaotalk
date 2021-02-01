@@ -20,7 +20,7 @@ open class BaseActivity: AppCompatActivity() {
         showHomeAsUpEnabled = true
     }
 
-    protected fun setOnOptionsMenu(menuRes: Int, vararg optionsItemIdToOnSelected: Pair<Int, () -> Unit>) {
+    protected fun setOnOptionsMenu(menuRes: Int, optionsItemIdToOnSelected: Array<Pair<Int, () -> Unit>>) {
         this.menuRes = menuRes
 
         optionsItemIdToOnSelected.forEach {

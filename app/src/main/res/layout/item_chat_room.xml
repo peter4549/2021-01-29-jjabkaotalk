@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/image_profilePhotos"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_small"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_snail_512px"
+            tools:ignore="ContentDescription" />
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_small"
+            app:layout_constraintEnd_toStartOf="@+id/text_time"
+            app:layout_constraintStart_toEndOf="@+id/image_profilePhotos"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/text_userNames"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:ellipsize="end"
+                tools:text="웬디, 슬기, 아이린, 예리" />
+
+            <TextView
+                android:id="@+id/text_userCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_small"
+                android:layout_toEndOf="@+id/text_userNames"
+                android:gravity="center_vertical"
+                tools:text="4" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/text_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:gravity="center_vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="2020.02.06" />
+
+        <TextView
+            android:id="@+id/text_lastMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:maxLines="2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/text_time"
+            app:layout_constraintStart_toEndOf="@+id/image_profilePhotos"
+            app:layout_constraintTop_toBottomOf="@+id/relativeLayout"
+            tools:text="도시라, 도시라 도시라 도시라, 안드로이드 아이오에스 신밧드의 모험" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
