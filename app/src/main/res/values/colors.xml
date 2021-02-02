@@ -16,6 +16,8 @@
     <color name="secondary_color">@color/light_blue_200</color>
     <color name="error">@color/red_500</color>
 
+    <!-- Chat -->
+    <color name="chat_bubble">@color/light_blue_200</color>
 
     <!-- Text -->
     <color name="text_enabled">@color/black</color>

@@ -1,7 +1,7 @@
 package com.grand.duke.elliot.jjabkaotalk.firebase
 
 import com.google.firebase.firestore.DocumentChange
-import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.gson.Gson
@@ -9,7 +9,6 @@ import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
 import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
-import com.grand.duke.elliot.jjabkaotalk.util.blank
 import org.json.JSONObject
 import timber.log.Timber
 import kotlin.NullPointerException
@@ -19,12 +18,14 @@ class FireStoreHelper {
     private val firebaseUser = MainApplication.getFirebaseAuthInstance().currentUser
     @Suppress("SpellCheckingInspection")
     private val gson = Gson()
+
     private val openChatRoomCollectionReference = FirebaseFirestore.getInstance().collection(Collection.OpenChatRooms)
     private val userCollectionReference = FirebaseFirestore.getInstance().collection(Collection.Users)
 
     private var onOpenChatRoomSnapshotListener: OnOpenChatRoomSnapshotListener? = null
     private var onUserDocumentSnapshotListener: OnUserDocumentSnapshotListener? = null
-    private var onUserSetListener: OnUserSetListener? = null
+    private var onSetUserListener: OnSetUserListener? = null
+    private var onSetOpenChatRoomListener: OnSetOpenChatRoomListener? = null
 
     private lateinit var openChatRoomsListenerRegistration: ListenerRegistration
 
@@ -36,8 +37,12 @@ class FireStoreHelper {
         this.onUserDocumentSnapshotListener = onUserDocumentSnapshotListener
     }
 
-    fun setOnUserSetListener(onUserSetListener: OnUserSetListener) {
-        this.onUserSetListener = onUserSetListener
+    fun setOnSetUserListener(onSetUserListener: OnSetUserListener) {
+        this.onSetUserListener = onSetUserListener
+    }
+
+    fun setOnSetOpenChatRoomListener(onSetOpenChatRoomListener: OnSetOpenChatRoomListener) {
+        this.onSetOpenChatRoomListener = onSetOpenChatRoomListener
     }
 
     interface OnUserDocumentSnapshotListener {
@@ -46,8 +51,13 @@ class FireStoreHelper {
         fun onNoUserDocumentSnapshot()
     }
 
-    interface OnUserSetListener {
+    interface OnSetUserListener {
         fun onSuccess()
+        fun onFailure()
+    }
+
+    interface OnSetOpenChatRoomListener {
+        fun onSuccess(openChatRoomId: String)
         fun onFailure()
     }
 
@@ -56,16 +66,16 @@ class FireStoreHelper {
         fun onException(exception: Exception)
     }
 
-    fun setupUserSnapshotListener(uid: String) {
+    fun registerUserSnapshotListener(uid: String): ListenerRegistration {
         val documentReference = userCollectionReference.document(uid)
-        documentReference.addSnapshotListener { documentSnapshot, fireStoreException ->
+        return documentReference.addSnapshotListener { documentSnapshot, fireStoreException ->
             fireStoreException?.let {
                 onUserDocumentSnapshotListener?.onException(it)
             } ?: run {
                 documentSnapshot?.let { documentSnapshot ->
                     if (documentSnapshot.exists()) {
                         documentSnapshot.data?.let {
-                            val user =  gson.fromJson(JSONObject(it).toString(), User::class.java)
+                            val user = gson.fromJson(JSONObject(it).toString(), User::class.java)
                             onUserDocumentSnapshotListener?.onUserDocumentSnapshot(user)
                         }
                     } else {
@@ -86,12 +96,12 @@ class FireStoreHelper {
                 if (task.isSuccessful) {
                     Timber.d("User set.")
                     // 유저 정보를 생성함. TODO check,, 더 할거 없을지도.
-                    onUserSetListener?.onSuccess()
+                    onSetUserListener?.onSuccess()
                 } else {
                     task.exception?.let { e ->
                         Timber.e(e, "Failed to set user.")
                         // 유저 정보를 생성 못함.
-                        onUserSetListener?.onFailure()
+                        onSetUserListener?.onFailure()
                     }
                 }
             }
@@ -100,8 +110,8 @@ class FireStoreHelper {
         }
     }
 
-    fun setupOpenChatRoomSnapshotListener(location: String) {
-        openChatRoomsListenerRegistration = openChatRoomCollectionReference
+    fun registerOpenChatRoomSnapshotListener(location: String): ListenerRegistration {
+        return openChatRoomCollectionReference
                 .whereEqualTo(OpenChatRoom.FIELD_LOCATION, location)
                 .addSnapshotListener { querySnapshot, fireStoreException ->
                     fireStoreException?.let {
@@ -122,35 +132,70 @@ class FireStoreHelper {
         return gson.fromJson(JSONObject(map).toString(), OpenChatRoom::class.java)
     }
 
-    fun setOpenChatRoom(openChatRoom: OpenChatRoom, message: String) {
+    fun setOpenChatRoom(openChatRoom: OpenChatRoom, chatMessage: ChatMessage) {
         val openChatRoomDocumentReference = openChatRoomCollectionReference.document(openChatRoom.id)
-        val uid = MainApplication.user?.uid ?: throw NullPointerException("MainApplication.user?.uid is null.")
-        val chatMessage = ChatMessage(
-                message = message,
-                readerIds = mutableListOf(uid),
-                senderId = uid,
-                time = openChatRoom.time
-        )
 
         openChatRoomDocumentReference
                 .set(openChatRoom).addOnSuccessListener {
                     openChatRoomDocumentReference.collection(Collection.Messages)
                             .add(chatMessage)
                             .addOnSuccessListener {
-                                // TODO fill.
+                                Timber.d("openChatRoom created.")
+                                onSetOpenChatRoomListener?.onSuccess(openChatRoom.id)
                             }
                             .addOnFailureListener {
-                                // TODO fill.
+                                Timber.e(it)
+                                onSetOpenChatRoomListener?.onFailure()
                             }
                 }.addOnFailureListener {
                     Timber.e(it)
-                    // todo. fill.
+                    onSetOpenChatRoomListener?.onFailure()
                 }
     }
 
-    object Collection {
-        const val Messages = "message"
-        const val OpenChatRooms = "open_chat_rooms"
-        const val Users = "users"
+    fun getUsers(userIds: List<String>, onUsers: (List<User>) -> Unit) {
+        val users = mutableListOf<User>()
+        userCollectionReference.whereIn(User.FIELD_UID, userIds).get().addOnSuccessListener { querySnapshot ->
+            for (document in querySnapshot.documents) {
+                document?.data?.let {
+                    users.add(gson.fromJson(JSONObject(it).toString(), User::class.java))
+                }
+            }
+
+            onUsers.invoke(users)
+        }
+    }
+
+    fun updateUser(user: User, field: String, value: Any) {
+        userCollectionReference.document(user.uid)
+                .update(mapOf(field to value))
+                .addOnSuccessListener {
+                    Timber.d("User updated.")
+                }
+                .addOnFailureListener {
+                    Timber.w("User update failed.")
+                }
+    }
+
+    fun userArrayUnion(uid: String, field: String, value: Any) {
+        userCollectionReference.document(uid)
+                .update(field, FieldValue.arrayUnion(value))
+                .addOnSuccessListener {
+                    Timber.d("User updated.")
+                }
+                .addOnFailureListener {
+                    Timber.w("User update failed.")
+                }
+    }
+
+    fun chatRoomArrayUnion(id: String, field: String, value: Any) {
+        openChatRoomCollectionReference.document(id)
+                .update(field, FieldValue.arrayUnion(value))
+                .addOnSuccessListener {
+                    Timber.d("ChatRoom updated.")
+                }
+                .addOnFailureListener {
+                    Timber.w("ChatRoom update failed.")
+                }
     }
 }

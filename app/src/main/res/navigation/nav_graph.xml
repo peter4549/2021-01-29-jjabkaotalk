@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/nav_graph"
+    app:startDestination="@id/tabFragment">
+
+    <fragment
+        android:id="@+id/tabFragment"
+        android:name="com.grand.duke.elliot.jjabkaotalk.main.TabFragment"
+        android:label="TabFragment" >
+        <action
+            android:id="@+id/action_tabFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
+        <action
+            android:id="@+id/action_tabFragment_to_openChatFragment"
+            app:destination="@id/openChatFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.grand.duke.elliot.jjabkaotalk.chat.ChatFragment"
+        android:label="ChatFragment">
+
+        <argument
+            android:name="chatRoom"
+            app:argType="com.grand.duke.elliot.jjabkaotalk.data.ChatRoom"
+            app:nullable="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/openChatFragment"
+        android:name="com.grand.duke.elliot.jjabkaotalk.chat.open_chat.OpenChatFragment"
+        android:label="OpenChatFragment">
+
+        <argument
+            android:name="openChatRoom"
+            app:argType="com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom"
+            app:nullable="false" />
+    </fragment>
+</navigation>

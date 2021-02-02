@@ -10,10 +10,10 @@ data class User (
     var name: String,
     var profilePhotoUris: MutableList<String>,
     var location: String,
-    var friends: MutableList<String>, // TODO, check, is able to be list? (mutable..)
-    var chatRooms: MutableList<Long>, // TODO, check, is able to be list?
-    var openChatRooms: MutableList<Long>,
-    var pushToken: String = blank,
+    var friends: MutableList<String>,
+    var chatRooms: MutableList<String>,
+    var openChatRooms: MutableList<String>,
+    var token: String = blank,
     var verified: Boolean
 ): Parcelable {
 
@@ -24,6 +24,8 @@ data class User (
         const val FIELD_LOCATION = "location"
         const val FIELD_FRIENDS = "friends"
         const val FIELD_CHAT_ROOMS = "chatRooms"
+        const val FIELD_OPEN_CHAT_ROOMS = "openChatRooms"
+        const val FIELD_TOKEN = "token"
         const val FIELD_VERIFIED = "verified"
     }
 }

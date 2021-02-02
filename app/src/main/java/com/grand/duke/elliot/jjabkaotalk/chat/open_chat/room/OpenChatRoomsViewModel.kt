@@ -1,4 +1,4 @@
-package com.grand.duke.elliot.jjabkaotalk.open_chat.rooms
+package com.grand.duke.elliot.jjabkaotalk.chat.open_chat.room
 
 import androidx.lifecycle.ViewModel
 import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom

@@ -1,4 +1,4 @@
-package com.grand.duke.elliot.jjabkaotalk.open_chat.rooms
+package com.grand.duke.elliot.jjabkaotalk.chat.open_chat.room
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -10,12 +10,24 @@ import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
 import com.grand.duke.elliot.jjabkaotalk.databinding.ItemChatRoomBinding
 import com.grand.duke.elliot.jjabkaotalk.databinding.ItemDateBinding
+import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.toDateFormat
+import kotlinx.coroutines.*
 
-class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHolder>(AdapterItemDiffCallback()) {
-
+class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHolder>(
+    AdapterItemDiffCallback()
+) {
     private lateinit var recyclerView: RecyclerView
+    private var onItemClickListener: OnItemClickListener? = null
+
+    fun setOnItemClickListener(onItemClickListener: OnItemClickListener) {
+        this.onItemClickListener = onItemClickListener
+    }
+
+    interface OnItemClickListener {
+        fun onClick(openChatRoom: OpenChatRoom)
+    }
 
     inner class ViewHolder constructor(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
 
@@ -31,6 +43,10 @@ class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHold
                     binding.textUserNames.text = adapterItem.openChatRoom.name
                     // binding.textUserNames.text = userNames
                     binding.textUserCount.text = users.count().toString()
+
+                    binding.root.setOnClickListener {
+                        onItemClickListener?.onClick(adapterItem.openChatRoom)
+                    }
                 }
             }
         }
@@ -63,6 +79,7 @@ class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHold
                 }
             }
 
+            // TODO. load user data by userIds.
             items.add(AdapterItem.OpenChatRoomItem(item.id, item))
         }
 

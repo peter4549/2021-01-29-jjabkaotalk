@@ -4,7 +4,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import com.grand.duke.elliot.jjabkaotalk.chat.ChatRoomsFragment
 import com.grand.duke.elliot.jjabkaotalk.friends.FriendsFragment
-import com.grand.duke.elliot.jjabkaotalk.open_chat.rooms.OpenChatRoomsFragment
+import com.grand.duke.elliot.jjabkaotalk.chat.open_chat.room.OpenChatRoomsFragment
 
 class FragmentStateAdapter(fragmentActivity: FragmentActivity):
     androidx.viewpager2.adapter.FragmentStateAdapter(fragmentActivity) {

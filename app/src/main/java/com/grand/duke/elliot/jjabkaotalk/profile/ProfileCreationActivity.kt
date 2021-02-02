@@ -11,7 +11,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.google.firebase.auth.FirebaseUser
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.authentication.PhoneAuthenticationFragment
 import com.grand.duke.elliot.jjabkaotalk.base.BaseActivity
@@ -32,7 +31,7 @@ class ProfileCreationActivity: BaseActivity(), SimpleListDialogFragment.Fragment
     private lateinit var binding: ActivityProfileCreationBinding
     private val firebaseUser = MainApplication.getFirebaseAuthInstance().currentUser
     private val fireStoreHelper = FireStoreHelper().apply {
-        setOnUserSetListener(object: FireStoreHelper.OnUserSetListener {
+        setOnSetUserListener(object: FireStoreHelper.OnSetUserListener {
             override fun onSuccess() {
                 finish()
             }
