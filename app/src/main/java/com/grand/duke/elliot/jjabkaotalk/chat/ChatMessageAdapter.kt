@@ -57,8 +57,7 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
                         // My chat message.
                         binding as ItemChatRightBinding
                         binding.textMessage.text = adapterItem.chatMessage.message
-
-                        println("EEEEEE: $chatMessage $unreadCount")
+                        
                         if (unreadCount > 0) {
                             binding.textUnreadCount.visibility = View.VISIBLE
                             binding.textUnreadCount.text = unreadCount.toString()
