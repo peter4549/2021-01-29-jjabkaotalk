@@ -1,21 +1,28 @@
-package com.grand.duke.elliot.jjabkaotalk.chat.open_chat.room
+package com.grand.duke.elliot.jjabkaotalk.chat.room
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.grand.duke.elliot.jjabkaotalk.R
-import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.databinding.ItemChatRoomBinding
 import com.grand.duke.elliot.jjabkaotalk.databinding.ItemDateBinding
-import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
+import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.toDateFormat
-import kotlinx.coroutines.*
+import com.grand.duke.elliot.jjabkaotalk.util.toLocalTimeString
 
-class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHolder>(
+class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
     AdapterItemDiffCallback()
 ) {
     private lateinit var recyclerView: RecyclerView
@@ -26,7 +33,7 @@ class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHold
     }
 
     interface OnItemClickListener {
-        fun onClick(openChatRoom: OpenChatRoom)
+        fun onClick(chatRoom: ChatRoom)
     }
 
     inner class ViewHolder constructor(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -36,19 +43,70 @@ class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHold
                 is AdapterItem.DateItem -> {}
                 is AdapterItem.OpenChatRoomItem -> {
                     binding as ItemChatRoomBinding
-                    val users = adapterItem.openChatRoom.users
+                    val chatRoom = adapterItem.chatRoom
+                    val users = chatRoom.users
                     val userNames = users.joinToString(", ") { it.name }
 
                     // todo. change to name..
-                    binding.textUserNames.text = adapterItem.openChatRoom.name
-                    // binding.textUserNames.text = userNames
+
+                    if (chatRoom.type == ChatRoom.TYPE_PRIVATE)
+                        binding.textUserNames.text = userNames
+                    else
+                        binding.textUserNames.text = chatRoom.name
+
+                    binding.textLastMessage.text = chatRoom.lastMessage.message
                     binding.textUserCount.text = users.count().toString()
 
+                    binding.textTime.text = chatRoom.lastMessage.time.toLocalTimeString()
+                    binding.textUnreadCount.text = chatRoom.unreadCounter[MainApplication.user.value?.uid].toString()
+
                     binding.root.setOnClickListener {
-                        onItemClickListener?.onClick(adapterItem.openChatRoom)
+                        onItemClickListener?.onClick(adapterItem.chatRoom)
                     }
                 }
             }
+        }
+
+        fun setProfilePhotos(chatRoom: ChatRoom) {
+            binding as ItemChatRoomBinding
+
+            if (chatRoom.users.count() == 1) {
+                binding.imageProfilePhotos.visibility = View.VISIBLE
+                binding.constraintLayout2profilePhotos.visibility = View.GONE
+                binding.constraintLayout3profilePhotos.visibility = View.GONE
+                binding.constraintLayout4profilePhotos.visibility = View.GONE
+                chatRoom.users[0].profilePhotoUris.let {
+                    if (it.isNotEmpty())
+                        setImage(binding.imageProfilePhotos, it[0])
+                }
+            } else if (chatRoom.users.count() == 2) {
+                binding.imageProfilePhotos.visibility = View.GONE
+                binding.constraintLayout2profilePhotos.visibility = View.VISIBLE
+                binding.constraintLayout3profilePhotos.visibility = View.GONE
+                binding.constraintLayout4profilePhotos.visibility = View.GONE
+            } else if (chatRoom.users.count() == 3) {
+                binding.imageProfilePhotos.visibility = View.GONE
+                binding.constraintLayout2profilePhotos.visibility = View.GONE
+                binding.constraintLayout3profilePhotos.visibility = View.VISIBLE
+                binding.constraintLayout4profilePhotos.visibility = View.GONE
+            } else if (chatRoom.users.count() >= 4) {
+                binding.imageProfilePhotos.visibility = View.GONE
+                binding.constraintLayout2profilePhotos.visibility = View.GONE
+                binding.constraintLayout3profilePhotos.visibility = View.GONE
+                binding.constraintLayout4profilePhotos.visibility = View.VISIBLE
+            }
+        }
+
+        fun setImage(imageView: ImageView, uri: String) {
+            Glide.with(imageView.context)
+                .load(uri)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .placeholder(R.drawable.ic_round_account_circle_96)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .transform(CircleCrop())
+                .into(imageView)
         }
     }
 
@@ -62,7 +120,7 @@ class OpenChatRoomAdapter: ListAdapter<AdapterItem, OpenChatRoomAdapter.ViewHold
         return ViewHolder(binding)
     }
 
-    fun addDateAndSubmitList(list: List<OpenChatRoom>) {
+    fun addDateAndSubmitList(list: List<ChatRoom>) {
         if (list.isNullOrEmpty())
             return
 
@@ -131,7 +189,7 @@ sealed class AdapterItem {
 
     data class OpenChatRoomItem(
             override val id: String,
-            val openChatRoom: OpenChatRoom
+            val chatRoom: ChatRoom
     ): AdapterItem()
 
     abstract val id: String

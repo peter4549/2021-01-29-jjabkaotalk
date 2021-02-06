@@ -4,7 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 
 object Collection {
     const val Messages = "messages"
-    const val OpenChatRooms = "open_chat_rooms"
+    const val ChatRooms = "chat_rooms"
     const val Users = "users"
 }
 

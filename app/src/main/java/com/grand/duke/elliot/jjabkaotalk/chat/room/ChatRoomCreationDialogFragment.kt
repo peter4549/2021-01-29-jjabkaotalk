@@ -1,4 +1,4 @@
-package com.grand.duke.elliot.jjabkaotalk.chat.open_chat.room
+package com.grand.duke.elliot.jjabkaotalk.chat.room
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,14 +8,14 @@ import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
-import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.databinding.FragmentOpenChatRoomCreationDialogBinding
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import com.grand.duke.elliot.jjabkaotalk.util.hashString
 
-class OpenChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpenChatRoomListener {
+class ChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpenChatRoomListener {
 
     private lateinit var binding: FragmentOpenChatRoomCreationDialogBinding
     private lateinit var uid: String
@@ -26,7 +26,7 @@ class OpenChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSe
         binding = FragmentOpenChatRoomCreationDialogBinding.inflate(inflater, container, false)
 
         fireStoreHelper.setOnSetOpenChatRoomListener(this)
-        user = MainApplication.user ?: throw NullPointerException("MainApplication.user?.uid is null.")
+        user = MainApplication.user.value ?: throw NullPointerException("MainApplication.user?.uid is null.")
         uid = user.uid
 
         binding.buttonCancel.setOnClickListener {
@@ -42,7 +42,7 @@ class OpenChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSe
             }
 
             var message = getString(R.string.chat_room_entry_message)
-            message = MainApplication.user?.name + message
+            message = user.name + message
 
             val chatMessage = ChatMessage(
                 message = message,
@@ -58,23 +58,24 @@ class OpenChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSe
         return binding.root
     }
 
-    private fun createOpenChatRoom(name: String, chatMessage: ChatMessage): OpenChatRoom {
+    private fun createOpenChatRoom(name: String, chatMessage: ChatMessage): ChatRoom {
         val creationTime = System.currentTimeMillis()
         val id =  hashString(uid + creationTime).chunked(32)[0]
 
-        return OpenChatRoom(
+        return ChatRoom(
             id = id,
             name = name,
             lastMessage = chatMessage,
             location = "busan", // todo. change here.
             unreadCounter = mutableMapOf(uid to 0),
             users = mutableListOf(user),
-            time = creationTime
+            time = creationTime,
+            type = ChatRoom.TYPE_PUBLIC
         )
     }
 
     override fun onSuccess(openChatRoomId: String) {
-        fireStoreHelper.userArrayUnion(user.uid, User.FIELD_OPEN_CHAT_ROOMS, openChatRoomId)
+        fireStoreHelper.userArrayUnion(user.uid, User.FIELD_CHAT_ROOMS, openChatRoomId)
     }
 
     override fun onFailure() {

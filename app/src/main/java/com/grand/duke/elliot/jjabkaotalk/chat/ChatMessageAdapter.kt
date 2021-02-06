@@ -1,14 +1,16 @@
-package com.grand.duke.elliot.jjabkaotalk.chat.open_chat
+package com.grand.duke.elliot.jjabkaotalk.chat
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
-import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.databinding.ItemChatLeftBinding
 import com.grand.duke.elliot.jjabkaotalk.databinding.ItemChatRightBinding
@@ -18,15 +20,27 @@ import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.toDateFormat
 import com.grand.duke.elliot.jjabkaotalk.util.toLocalTimeString
 
-class OpenChatMessageAdapter(private val openChatRoom: OpenChatRoom): ListAdapter<AdapterItem, OpenChatMessageAdapter.ViewHolder>(
-    AdapterItemDiffCallback()
-) {
-    private val user = MainApplication.user ?: throw NullPointerException("ChatMessageAdapter: MainApplication.user is null.")
+class ChatMessageAdapter(private val chatRoom: ChatRoom):
+        ListAdapter<AdapterItem, ChatMessageAdapter.ViewHolder>(
+            AdapterItemDiffCallback()
+        ) {
+    private val user = MainApplication.user.value ?: throw NullPointerException("ChatMessageAdapter: MainApplication.user is null.")
     private val uidToUser = mutableMapOf<String, User>()
     private var recyclerView: RecyclerView? = null
 
+    private var onItemClickListener: OnItemClickListener? = null
+
+    fun setOnItemClickListener(onItemClickListener: OnItemClickListener) {
+        this.onItemClickListener = onItemClickListener
+    }
+
+    interface OnItemClickListener {
+        fun onChatMessageLongClick(chatMessage: ChatMessage)
+        fun onProfileImageClick(sender: User)
+    }
+
     init {
-        openChatRoom.users.forEach {
+        chatRoom.users.forEach {
             uidToUser[it.uid] = it
         }
     }
@@ -36,19 +50,63 @@ class OpenChatMessageAdapter(private val openChatRoom: OpenChatRoom): ListAdapte
         fun bind(adapterItem: AdapterItem) {
             when (adapterItem) {
                 is AdapterItem.ChatMessageItem -> {
+                    val chatMessage = adapterItem.chatMessage
+                    val unreadCount = chatRoom.users.count() - chatMessage.readerIds.count()
+
                     if (adapterItem.chatMessage.senderId == user.uid) {
+                        // My chat message.
                         binding as ItemChatRightBinding
                         binding.textMessage.text = adapterItem.chatMessage.message
+
+                        println("EEEEEE: $chatMessage $unreadCount")
+                        if (unreadCount > 0) {
+                            binding.textUnreadCount.visibility = View.VISIBLE
+                            binding.textUnreadCount.text = unreadCount.toString()
+                        } else
+                            binding.textUnreadCount.visibility = View.GONE
+
+                        /*
+                        Toast.makeText(
+                            binding.root.context,
+                            "ap: ${adapterPosition} mine: " + chatMessage.readerIds + " ${chatMessage.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                         */
+
+                        binding.textTime.text = chatMessage.time.toLocalTimeString()
                     } else {
                         binding as ItemChatLeftBinding
-                        val chatMessage = adapterItem.chatMessage
-                        val unreadCount = openChatRoom.users.count() - chatMessage.readerIds.count()
                         binding.textMessage.text = chatMessage.message
-                        println("LLLLLLLLL: ${uidToUser.values}")
                         binding.textName.text = uidToUser[chatMessage.senderId]?.name
-                                ?: binding.root.context.getString(R.string.unknown) // todo change to res..
-                        binding.textUnreadCount.text = unreadCount.toString()
+                            ?: binding.root.context.getString(R.string.unknown)
+
+                        if (unreadCount > 0) {
+                            binding.textUnreadCount.visibility = View.VISIBLE
+                            binding.textUnreadCount.text = unreadCount.toString()
+                        } else
+                            binding.textUnreadCount.visibility = View.GONE
+
                         binding.textTime.text = chatMessage.time.toLocalTimeString()
+                        /*
+                        Toast.makeText(
+                            binding.root.context,
+                            "ap: ${adapterPosition} others: " + chatMessage.readerIds + " ${chatMessage.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                         */
+
+                        binding.imageProfile.setOnClickListener {
+                            uidToUser[chatMessage.senderId]?.let { sender ->
+                                onItemClickListener?.onProfileImageClick(sender)
+                            }
+                        }
+
+                        binding.textMessage.setOnLongClickListener {
+                            onItemClickListener?.onChatMessageLongClick(chatMessage)
+                            true
+                        }
                     }
                 }
                 is AdapterItem.DateItem -> {
@@ -76,6 +134,27 @@ class OpenChatMessageAdapter(private val openChatRoom: OpenChatRoom): ListAdapte
         return ViewHolder(binding)
     }
 
+    fun update(chatMessage: ChatMessage) {
+        val item = currentList.find {
+            it is AdapterItem.ChatMessageItem
+                    && it.chatMessage.senderId == chatMessage.senderId
+                    && it.chatMessage.time == chatMessage.time
+        } ?: return
+
+        println("IIIIIIII: $item")
+
+        val position = getPosition(item.id)
+        notifyItemChanged(position)
+    }
+
+    private fun getPosition(id: Long): Int {
+        for ((index, item) in currentList.withIndex())
+            if (item.id == id)
+                return index
+
+        return 0
+    }
+
     fun addDateAndSubmitList(list: List<ChatMessage>, scrollTo: Int? = null) {
         val context = recyclerView?.context ?: return
 
@@ -100,7 +179,7 @@ class OpenChatMessageAdapter(private val openChatRoom: OpenChatRoom): ListAdapte
 
         recyclerView?.scheduleLayoutAnimation()
         submitList(items)
-        scrollTo?.let { recyclerView?.smoothScrollToPosition(it) }
+        // scrollTo?.let { recyclerView?.smoothScrollToPosition(it) }
     }
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -153,7 +232,7 @@ sealed class AdapterItem {
 
     data class ChatMessageItem(
         override val id: Long,
-        val chatMessage: ChatMessage
+        var chatMessage: ChatMessage
     ): AdapterItem()
 
     abstract val id: Long

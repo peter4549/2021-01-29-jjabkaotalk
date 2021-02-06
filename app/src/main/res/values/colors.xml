@@ -9,8 +9,12 @@
     <color name="white">#FFFFFFFF</color>
     <color name="light_blue_200">#81d4fa</color>
     <color name="light_blue_500">#03a9f4</color>
+    <color name="grey_50_dark">#c7c7c7</color>
     <color name="grey_500">#9e9e9e</color>
+    <color name="grey_500_dark">#707070</color>
+    <color name="grey_900">#212121</color>
     <color name="red_500">#f44336</color>
+    <color name="orange_500">#ff9800</color>
 
     <color name="primary_color">@color/light_blue_500</color>
     <color name="secondary_color">@color/light_blue_200</color>
@@ -20,7 +24,8 @@
     <color name="chat_bubble">@color/light_blue_200</color>
 
     <!-- Text -->
-    <color name="text_enabled">@color/black</color>
+    <color name="text_enabled_primary">@color/black</color>
+    <color name="text_enabled_secondary">@color/grey_900</color>
     <color name="text_disabled">@color/grey_500</color>
     <color name="hint_text">@color/grey_500</color>
 

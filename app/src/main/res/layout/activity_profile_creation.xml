@@ -31,7 +31,7 @@
                 <RelativeLayout
                     android:id="@+id/relativeLayout_profilePhoto"
                     android:layout_width="match_parent"
-                    android:layout_height="224dp"
+                    android:layout_height="280dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
@@ -91,7 +91,7 @@
                         android:layout_marginBottom="@dimen/spacing_small"
                         android:gravity="center_vertical"
                         android:inputType="textPersonName"
-                        android:textColor="@color/color_text"
+                        android:textColor="@color/color_text_primary"
                         android:textSize="@dimen/text_size_medium"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintHorizontal_bias="1.0"

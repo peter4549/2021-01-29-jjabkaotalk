@@ -37,6 +37,7 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/chat_bubble_left"
             android:lineSpacingMultiplier="1.1"
+            android:longClickable="true"
             android:maxWidth="200dp"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="parent"

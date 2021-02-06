@@ -1,41 +1,43 @@
-package com.grand.duke.elliot.jjabkaotalk.chat.open_chat
+package com.grand.duke.elliot.jjabkaotalk.chat
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.*
 import com.google.gson.Gson
 import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
-import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
-import com.grand.duke.elliot.jjabkaotalk.data.User
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.firebase.Collection
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.firebase.isNotNull
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
-import kotlinx.coroutines.launch
 import org.json.JSONObject
+import org.w3c.dom.DocumentType
 import timber.log.Timber
 
-class OpenChatViewModel: ViewModel() {
+class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
 
-    private lateinit var chatMessageCollectionReference: CollectionReference
     private lateinit var listenerRegistration: ListenerRegistration
     val fireStoreHelper = FireStoreHelper()
+    val openChatRoomDocumentReference = FirebaseFirestore.getInstance()
+            .collection(Collection.ChatRooms)
+            .document(chatRoom.id)
+    val chatMessageCollectionReference: CollectionReference = openChatRoomDocumentReference.collection(Collection.Messages)
+
+    init {
+        setChatMessageSnapshotListener(chatRoom)
+    }
 
     @Suppress("SpellCheckingInspection")
     private val gson = Gson()
-    private val _chatMessages = MutableLiveData<ArrayList<ChatMessage>>()
-    val chatMessages: LiveData<ArrayList<ChatMessage>>
-        get() = _chatMessages
+    private val _displayChatMessages = MutableLiveData<DisplayChatMessages>()
+    val displayChatMessages: LiveData<DisplayChatMessages>
+        get() = _displayChatMessages
 
-    private val user = MainApplication.user ?: throw NullPointerException("ChatMessageAdapter: MainApplication.user is null.")
+    private val user = MainApplication.user.value ?: throw NullPointerException("ChatMessageAdapter: MainApplication.user is null.")
 
     /** Receive chat messages. */
-    fun setChatMessageSnapshotListener(openChatRoom: OpenChatRoom) {
-        val openChatRoomCollectionReference = FirebaseFirestore.getInstance().collection(Collection.OpenChatRooms)
-        chatMessageCollectionReference = openChatRoomCollectionReference
-            .document(openChatRoom.id).collection(Collection.Messages)
+    private fun setChatMessageSnapshotListener(chatRoom: ChatRoom) {
         listenerRegistration = chatMessageCollectionReference
             .orderBy(ChatMessage.FIELD_TIME)
             .addSnapshotListener { querySnapshot, fireStoreException ->
@@ -44,22 +46,25 @@ class OpenChatViewModel: ViewModel() {
                     else -> {
                         querySnapshot?.let {
                             for (documentChange in querySnapshot.documentChanges) {
-                                val chatMessage = documentChange.document.data.toChatMessage() ?: continue
+                                val chatMessage = documentChange.document.data
+                                    .toChatMessage(documentChange.document.id) ?: continue
 
                                 when (documentChange.type) {
                                     DocumentChange.Type.ADDED -> {
                                         val value = arrayListOf<ChatMessage>()
-                                        chatMessages.value?.let {
-                                            value.addAll(it)
+                                        displayChatMessages.value?.let {
+                                            value.addAll(it.chatMessages)
                                         }
                                         value.add(chatMessage)
-                                        _chatMessages.value = value
+                                        _displayChatMessages.value = DisplayChatMessages(value, DocumentChange.Type.ADDED, null)
                                         updateReaderIds(chatMessage, documentChange.document.id)
+                                    }
+                                    DocumentChange.Type.MODIFIED -> {
+                                        update(chatMessage)
                                     }
                                     DocumentChange.Type.REMOVED -> {
                                         remove(chatMessage)
                                     }
-                                    else -> { /** Unused. */ }
                                 }
                             }
                         }
@@ -68,8 +73,33 @@ class OpenChatViewModel: ViewModel() {
             }
     }
 
+    private fun update(chatMessage: ChatMessage) {
+        displayChatMessages.value?.let { displayChatMessages ->
+            val chatMessages = displayChatMessages.chatMessages
+            val value = chatMessages.find {
+                it.senderId == chatMessage.senderId && it.time == chatMessage.time
+            }
+            val index = chatMessages.indexOf(value)
+
+            if (index == -1)
+                return@let
+
+            println("UUUUUUUUUUUUUUUU: ${value}")
+            value?.let {
+                chatMessages[index] = chatMessage
+                println("MMMMMMMMMMMupdate: ${chatMessages[index]}")
+                _displayChatMessages.value = displayChatMessages.apply {
+                    this.chatMessages = chatMessages
+                    this.type = DocumentChange.Type.MODIFIED
+                    this.changedChatMessage = chatMessage
+                }
+            }
+        }
+    }
+
     private fun remove(chatMessage: ChatMessage) {
-        chatMessages.value?.let { chatMessages ->
+        displayChatMessages.value?.let { displayChatMessages ->
+            val chatMessages = displayChatMessages.chatMessages
             val value = chatMessages.find {
                 it.senderId == chatMessage.senderId && it.time == chatMessage.time
             }
@@ -79,13 +109,29 @@ class OpenChatViewModel: ViewModel() {
                 return@let
 
             chatMessages.removeAt(index)
-            _chatMessages.value = chatMessages
+            _displayChatMessages.value = displayChatMessages.apply {
+                this.chatMessages = chatMessages
+                this.type = DocumentChange.Type.REMOVED
+                this.changedChatMessage = null
+            }
         }
     }
 
-    private fun Map<String, Any>.toChatMessage(): ChatMessage? {
+    private fun Map<String, Any>.toChatMessage(chatMessageDocumentId: String? = null): ChatMessage? {
         val chatMessage = gson.fromJson(JSONObject(this).toString(), ChatMessage::class.java)
             ?: return null
+
+        chatMessageDocumentId?.let {
+            chatMessageCollectionReference.document(it)
+                .update(
+                    ChatMessage.FIELD_READER_IDS,
+                    FieldValue.arrayUnion(user.uid)
+                ).addOnSuccessListener {
+                    Timber.d("readerIds updated.")
+                }.addOnFailureListener { e ->
+                    Timber.e(e)
+                }
+        }
 
         return chatMessage.apply {
             readerIds.apply {
@@ -121,3 +167,9 @@ class OpenChatViewModel: ViewModel() {
             listenerRegistration.remove()
     }
 }
+
+data class DisplayChatMessages(
+    var chatMessages: ArrayList<ChatMessage>,
+    var type: DocumentChange.Type,
+    var changedChatMessage: ChatMessage?
+)

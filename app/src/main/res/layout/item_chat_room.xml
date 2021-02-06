@@ -7,16 +7,138 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/image_profilePhotos"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+        <FrameLayout
+            android:id="@+id/frameLayout_profilePhotos"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginStart="@dimen/spacing_small"
             android:layout_marginTop="@dimen/spacing_small"
+            android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_snail_512px"
-            tools:ignore="ContentDescription" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/image_profilePhotos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="visible"
+                tools:ignore="ContentDescription"
+                tools:srcCompat="@drawable/ic_snail_512px"/>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/constraintLayout_2profilePhotos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="invisible"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/image_2profilePhotos1"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/image_2profilePhotos2"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:elevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/constraintLayout_3profilePhotos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="invisible"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/image_3profilePhotos1"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/image_3profilePhotos2"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:elevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/image_3profilePhotos3"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:elevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/constraintLayout_4profilePhotos"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="invisible"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/image_4profilePhotos1"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/image_4profilePhotos2"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:elevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/image_4profilePhotos3"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:elevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/image_4profilePhotos4"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:elevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    tools:srcCompat="@drawable/ic_snail_512px"
+                    tools:ignore="ContentDescription" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </FrameLayout>
 
         <RelativeLayout
             android:id="@+id/relativeLayout"
@@ -26,15 +148,18 @@
             android:layout_marginStart="@dimen/spacing_small"
             android:layout_marginTop="@dimen/spacing_small"
             app:layout_constraintEnd_toStartOf="@+id/text_time"
-            app:layout_constraintStart_toEndOf="@+id/image_profilePhotos"
+            app:layout_constraintStart_toEndOf="@+id/frameLayout_profilePhotos"
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/text_userNames"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
                 android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:textColor="@color/color_text_primary"
+                android:textSize="@dimen/text_size_medium"
                 tools:text="웬디, 슬기, 아이린, 예리" />
 
             <TextView
@@ -52,9 +177,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_marginEnd="@dimen/spacing_small"
             android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginEnd="@dimen/spacing_small"
             android:gravity="center_vertical"
+            android:textSize="@dimen/text_size_small"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="2020.02.06" />
@@ -63,15 +189,28 @@
             android:id="@+id/text_lastMessage"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:layout_marginEnd="@dimen/spacing_small"
             android:layout_marginStart="@dimen/spacing_small"
-            android:layout_marginTop="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_extra_small"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_marginBottom="@dimen/spacing_small"
             android:maxLines="2"
+            android:textColor='@color/color_text_secondary'
+            android:textSize="@dimen/text_size_small"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/text_time"
-            app:layout_constraintStart_toEndOf="@+id/image_profilePhotos"
+            app:layout_constraintStart_toEndOf="@+id/frameLayout_profilePhotos"
             app:layout_constraintTop_toBottomOf="@+id/relativeLayout"
             tools:text="도시라, 도시라 도시라 도시라, 안드로이드 아이오에스 신밧드의 모험" />
+
+        <TextView
+            android:id="@+id/text_unreadCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_medium"
+            android:textColor="@color/orange_500"
+            android:textSize="@dimen/text_size_small"
+            app:layout_constraintStart_toEndOf="@+id/text_lastMessage"
+            app:layout_constraintTop_toTopOf="@+id/text_lastMessage"
+            tools:text="999+" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

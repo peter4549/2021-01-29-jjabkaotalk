@@ -2,20 +2,25 @@ package com.grand.duke.elliot.jjabkaotalk.sign_in
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import androidx.databinding.DataBindingUtil
+import com.facebook.CallbackManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.base.BaseActivity
 import com.grand.duke.elliot.jjabkaotalk.databinding.ActivitySignInBinding
 import com.grand.duke.elliot.jjabkaotalk.sign_in.SignInHelper.Companion.REQUEST_CODE_GOOGLE_SIGN_IN
+import com.nhn.android.naverlogin.OAuthLogin
+import com.nhn.android.naverlogin.OAuthLoginHandler
 import timber.log.Timber
 
 class SignInActivity: BaseActivity(), SignInHelper.OnSignInListener {
 
     private lateinit var signInHelper: SignInHelper
     private lateinit var binding: ActivitySignInBinding
+
+    // Facebook.
+    private val callbackManager = CallbackManager.Factory.create()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,15 +30,30 @@ class SignInActivity: BaseActivity(), SignInHelper.OnSignInListener {
         signInHelper = SignInHelper(this)
         signInHelper.setOnSignInListener(this)
 
-        /** Google Sign-In */
-        binding.imageButtonGoogleSignIn.setOnClickListener {
+        /** Facebook Login. */
+        binding.linearLayoutFacebookLogin.setOnClickListener {
+            signInHelper.loginWithFacebook(callbackManager)
+        }
+
+        /** Google Sign-In. */
+        binding.linearLayoutGoogleSignIn.setOnClickListener {
             signInHelper.signInWithGoogle()
+        }
+
+        /** Kakao Login. */
+        binding.linearLayoutKakaoLogin.setOnClickListener {
+            signInHelper.loginWithKakao(this)
+        }
+
+        /** Naver Login. */
+        binding.linearLayoutNaverLogin.setOnClickListener {
+            signInHelper.loginWithNaver(this)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
+        callbackManager?.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             REQUEST_CODE_GOOGLE_SIGN_IN -> {
                 try {
@@ -41,8 +61,8 @@ class SignInActivity: BaseActivity(), SignInHelper.OnSignInListener {
                     val account = task.getResult(ApiException::class.java)
                     signInHelper.firebaseAuthWithGoogle(account)
                 } catch (e: ApiException) {
-                    Timber.e(e, getString(R.string.failed_to_google_sign_in))
-                    showToast("${getString(R.string.failed_to_google_sign_in)}: ${e.message}")
+                    Timber.e(e, getString(R.string.failed_to_sign_in))
+                    showToast("${getString(R.string.failed_to_sign_in)}: ${e.message}")
 
                     val intent = Intent()
                     setResult(RESULT_CANCELED, intent)
@@ -52,17 +72,31 @@ class SignInActivity: BaseActivity(), SignInHelper.OnSignInListener {
         }
     }
 
-    override fun onAfterGoogleSignIn(result: Boolean) {
-        val intent = Intent()
+    override fun onFacebookLogin(result: Boolean) {
+        finish()
+    }
+
+    override fun onGoogleSignIn(result: Boolean) {
 
         if (result) {
-            setResult(RESULT_OK, intent)
+
             finish()
         } else {
-            setResult(RESULT_CANCELED, intent)
-            finish()
+
+            // finish()
         }
     }
 
-    override fun onBeforeGoogleSignIn() {}
+    override fun onKakaoLogin(result: Boolean) {
+        if (result)
+            finish()
+    }
+
+    override fun onNaverLogin(result: Boolean, lastErrorCode: String?, lastErrorDesc: String?) {
+
+    }
+
+    override fun onCanceled() {
+
+    }
 }

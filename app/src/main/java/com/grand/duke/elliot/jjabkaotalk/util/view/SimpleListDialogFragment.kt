@@ -143,7 +143,8 @@ class SimpleListDialogFragment: DialogFragment() {
 }
 
 data class SimpleItem(
-    val id: String,
-    val name: String,
-    val drawable: Drawable? = null
+        val id: String,
+        val name: String,
+        val drawable: Drawable? = null
 )
+

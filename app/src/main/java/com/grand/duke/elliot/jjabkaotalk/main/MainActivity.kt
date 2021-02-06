@@ -12,11 +12,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.messaging.FirebaseMessaging
 import com.grand.duke.elliot.jjabkaotalk.R
+import com.grand.duke.elliot.jjabkaotalk.chat.mine.MyChatRoomsFragment
+import com.grand.duke.elliot.jjabkaotalk.chat.room.ChatRoomsFragment
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.data.User.Companion.FIELD_TOKEN
 import com.grand.duke.elliot.jjabkaotalk.databinding.ActivityMainBinding
 import com.grand.duke.elliot.jjabkaotalk.firebase.Collection
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
+import com.grand.duke.elliot.jjabkaotalk.friends.FriendsFragment
 import com.grand.duke.elliot.jjabkaotalk.profile.ProfileCreationActivity
 import com.grand.duke.elliot.jjabkaotalk.sign_in.SignInActivity
 import timber.log.Timber
@@ -46,16 +49,20 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
         MainApplication.getFirebaseAuthInstance().addAuthStateListener { firebaseAuth ->
             if (firebaseAuth.currentUser.isNotNull()) {
                 firebaseAuth.currentUser?.uid?.let {
-                    fireStoreHelper.setOnDocumentSnapshotListener(this)
+                    fireStoreHelper.setOnUserDocumentSnapshotListener(this)
                     listenerRegistration = fireStoreHelper.registerUserSnapshotListener(it)
                 }
             } else {
+                if (this::listenerRegistration.isInitialized)
+                    listenerRegistration.remove()
+
+                MainApplication.user.value = null
                 startSignInActivity()
             }
         }
     }
 
-    private fun startSignInActivity() {
+    fun startSignInActivity() {
         val intent = Intent(this, SignInActivity::class.java)
         startActivityForResult(intent, REQUEST_CODE_SIGN_IN_ACTIVITY)
     }
@@ -72,29 +79,20 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
         }
     }
 
-    /** FireStoreHelper.OnDocumentSnapshotListener */
+    /** FireStoreHelper.OnUserDocumentSnapshotListener */
     override fun onUserDocumentSnapshot(user: User) {
-        showToast("WHAT THE?")
-        if (user.verified) {
-            showToast("WORKWELL!")
-            MainApplication.user = user
-            updateToken(user)
-            // TODO: load info, 정상적으로 앱 이용가능상태.
-            // 토큰 요청.
-        } else {
-            // TODO. 프로필로 이동, 번호인증하라고 메시지 띄워주기.
-            startProfileCreationActivity(user)
-        }
+        MainApplication.user.value = user
+        updateToken(user)
+    }
+
+    override fun onNoUserDocumentSnapshot() {
+        MainApplication.user.value = null
+        startProfileCreationActivity(null)
     }
 
     override fun onException(exception: Exception) {
         Timber.e(exception)
-    }
-
-    override fun onNoUserDocumentSnapshot() {
-        showToast("WHAT FFFFF?")
-        // TODO 작성된 프로필 없음 => 프로필 작성 액티비티로 이동,
-        startProfileCreationActivity(null)
+        MainApplication.user.value = null
     }
 
     private fun updateToken(user: User) {
@@ -113,14 +111,14 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
                 val map = mapOf(FIELD_TOKEN to token)
 
                 FirebaseFirestore.getInstance()
-                    .collection(Collection.Users)
-                    .document(user.uid)
-                    .update(map).addOnCompleteListener { updateTask ->
-                        if (updateTask.isSuccessful)
-                            Timber.d("Token updated.")
-                        else
-                            Timber.w("Token update failed.")
-                    }
+                        .collection(Collection.Users)
+                        .document(user.uid)
+                        .update(map).addOnCompleteListener { updateTask ->
+                            if (updateTask.isSuccessful)
+                                Timber.d("Token updated.")
+                            else
+                                Timber.w("Token update failed.")
+                        }
             })
     }
 

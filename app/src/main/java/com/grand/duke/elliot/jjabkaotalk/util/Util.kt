@@ -1,5 +1,10 @@
 package com.grand.duke.elliot.jjabkaotalk.util
 
+import android.os.Parcelable
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 import java.security.MessageDigest
 import java.text.DateFormat
 import java.text.SimpleDateFormat

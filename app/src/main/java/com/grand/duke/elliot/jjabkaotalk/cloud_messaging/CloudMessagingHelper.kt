@@ -1,6 +1,6 @@
 package com.grand.duke.elliot.jjabkaotalk.cloud_messaging
 
-import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.squareup.okhttp.ResponseBody
 import kotlinx.coroutines.CoroutineScope
@@ -17,8 +17,8 @@ class CloudMessagingHelper {
     private val job = Job()
     private val coroutineScope = CoroutineScope(Dispatchers.IO + job)
 
-    fun sendCloudMessage(message: String, openChatRoom: OpenChatRoom, sender: User) {
-        val tokens = openChatRoom.users
+    fun sendCloudMessage(message: String, chatRoom: ChatRoom, sender: User) {
+        val tokens = chatRoom.users
             .filter { it.token != sender.token }
             .map { it.token }
 
@@ -26,10 +26,10 @@ class CloudMessagingHelper {
         cloudMessage.notification.title = sender.name
         cloudMessage.notification.body = message
         cloudMessage.notification.click_action = "action.ad.astra.cloud.message.click"
-        cloudMessage.notification.tag = openChatRoom.id
+        cloudMessage.notification.tag = chatRoom.id
 
         cloudMessage.data.message = message
-        cloudMessage.data.chatRoomId = openChatRoom.id
+        cloudMessage.data.chatRoomId = chatRoom.id
         cloudMessage.data.senderName = sender.name
         coroutineScope.launch {
             CloudMessageApi.getCloudMessagingService()

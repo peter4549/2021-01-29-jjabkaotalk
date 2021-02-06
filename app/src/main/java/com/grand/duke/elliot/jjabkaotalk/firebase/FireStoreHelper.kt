@@ -1,12 +1,9 @@
 package com.grand.duke.elliot.jjabkaotalk.firebase
 
-import com.google.firebase.firestore.DocumentChange
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.*
 import com.google.gson.Gson
 import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
-import com.grand.duke.elliot.jjabkaotalk.data.OpenChatRoom
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import org.json.JSONObject
@@ -19,21 +16,20 @@ class FireStoreHelper {
     @Suppress("SpellCheckingInspection")
     private val gson = Gson()
 
-    private val openChatRoomCollectionReference = FirebaseFirestore.getInstance().collection(Collection.OpenChatRooms)
+    private val openChatRoomCollectionReference = FirebaseFirestore.getInstance().collection(Collection.ChatRooms)
     private val userCollectionReference = FirebaseFirestore.getInstance().collection(Collection.Users)
 
     private var onOpenChatRoomSnapshotListener: OnOpenChatRoomSnapshotListener? = null
     private var onUserDocumentSnapshotListener: OnUserDocumentSnapshotListener? = null
     private var onSetUserListener: OnSetUserListener? = null
     private var onSetOpenChatRoomListener: OnSetOpenChatRoomListener? = null
-
-    private lateinit var openChatRoomsListenerRegistration: ListenerRegistration
+    private var onMyChatRoomsSnapshotListener: OnMyChatRoomsSnapshotListener? = null
 
     fun setOnOpenChatRoomSnapshotListener(onOpenChatRoomSnapshotListener: OnOpenChatRoomSnapshotListener) {
         this.onOpenChatRoomSnapshotListener = onOpenChatRoomSnapshotListener
     }
 
-    fun setOnDocumentSnapshotListener(onUserDocumentSnapshotListener: OnUserDocumentSnapshotListener) {
+    fun setOnUserDocumentSnapshotListener(onUserDocumentSnapshotListener: OnUserDocumentSnapshotListener) {
         this.onUserDocumentSnapshotListener = onUserDocumentSnapshotListener
     }
 
@@ -43,6 +39,15 @@ class FireStoreHelper {
 
     fun setOnSetOpenChatRoomListener(onSetOpenChatRoomListener: OnSetOpenChatRoomListener) {
         this.onSetOpenChatRoomListener = onSetOpenChatRoomListener
+    }
+
+    fun setOnMyChatRoomsSnapshotListener(onMyChatRoomsSnapshotListener: OnMyChatRoomsSnapshotListener) {
+        this.onMyChatRoomsSnapshotListener = onMyChatRoomsSnapshotListener
+    }
+
+    interface OnMyChatRoomsSnapshotListener {
+        fun onMyChatRoomsSnapshot(documentChanges: List<DocumentChange>)
+        fun onException(exception: Exception)
     }
 
     interface OnUserDocumentSnapshotListener {
@@ -112,7 +117,7 @@ class FireStoreHelper {
 
     fun registerOpenChatRoomSnapshotListener(location: String): ListenerRegistration {
         return openChatRoomCollectionReference
-                .whereEqualTo(OpenChatRoom.FIELD_LOCATION, location)
+                .whereEqualTo(ChatRoom.FIELD_LOCATION, location)
                 .addSnapshotListener { querySnapshot, fireStoreException ->
                     fireStoreException?.let {
                         onOpenChatRoomSnapshotListener?.onException(it)
@@ -128,20 +133,20 @@ class FireStoreHelper {
                 }
     }
 
-    fun convertToOpenChatRoom(map: Map<String, Any>): OpenChatRoom {
-        return gson.fromJson(JSONObject(map).toString(), OpenChatRoom::class.java)
+    fun convertToChatRoom(map: Map<String, Any>): ChatRoom {
+        return gson.fromJson(JSONObject(map).toString(), ChatRoom::class.java)
     }
 
-    fun setOpenChatRoom(openChatRoom: OpenChatRoom, chatMessage: ChatMessage) {
-        val openChatRoomDocumentReference = openChatRoomCollectionReference.document(openChatRoom.id)
+    fun setOpenChatRoom(chatRoom: ChatRoom, chatMessage: ChatMessage) {
+        val openChatRoomDocumentReference = openChatRoomCollectionReference.document(chatRoom.id)
 
         openChatRoomDocumentReference
-                .set(openChatRoom).addOnSuccessListener {
+                .set(chatRoom).addOnSuccessListener {
                     openChatRoomDocumentReference.collection(Collection.Messages)
                             .add(chatMessage)
                             .addOnSuccessListener {
                                 Timber.d("openChatRoom created.")
-                                onSetOpenChatRoomListener?.onSuccess(openChatRoom.id)
+                                onSetOpenChatRoomListener?.onSuccess(chatRoom.id)
                             }
                             .addOnFailureListener {
                                 Timber.e(it)
@@ -155,6 +160,12 @@ class FireStoreHelper {
 
     fun getUsers(userIds: List<String>, onUsers: (List<User>) -> Unit) {
         val users = mutableListOf<User>()
+
+        if (userIds.isEmpty()) {
+            onUsers.invoke(users)
+            return
+        }
+
         userCollectionReference.whereIn(User.FIELD_UID, userIds).get().addOnSuccessListener { querySnapshot ->
             for (document in querySnapshot.documents) {
                 document?.data?.let {
@@ -177,11 +188,12 @@ class FireStoreHelper {
                 }
     }
 
-    fun userArrayUnion(uid: String, field: String, value: Any) {
+    fun userArrayUnion(uid: String, field: String, value: Any, onSuccess: (() -> Unit)? = null) {
         userCollectionReference.document(uid)
                 .update(field, FieldValue.arrayUnion(value))
                 .addOnSuccessListener {
                     Timber.d("User updated.")
+                    onSuccess?.invoke()
                 }
                 .addOnFailureListener {
                     Timber.w("User update failed.")
@@ -196,6 +208,50 @@ class FireStoreHelper {
                 }
                 .addOnFailureListener {
                     Timber.w("ChatRoom update failed.")
+                }
+    }
+
+    fun registerMyChatRoomSnapshotListener(chatRoomIds: List<String>): ListenerRegistration? {
+        if (chatRoomIds.isEmpty())
+            return null
+
+        return openChatRoomCollectionReference
+                .whereIn(ChatRoom.FIELD_ID, chatRoomIds)
+                .addSnapshotListener { value: QuerySnapshot?, error: FirebaseFirestoreException? ->
+                    error?.let {
+                        onOpenChatRoomSnapshotListener?.onException(it)
+                    } ?: run {
+                        value?.let {
+                            /** Success. */
+                            onMyChatRoomsSnapshotListener?.onMyChatRoomsSnapshot(it.documentChanges)
+                        } ?: run {
+                            @Suppress("ThrowableNotThrown")
+                            onMyChatRoomsSnapshotListener?.onException(NullPointerException("querySnapshot is null."))
+                        }
+                    }
+                }
+    }
+
+
+    @Suppress("unused")
+    fun getMyChatRooms(chatRoomIds: List<String>, onSuccess: ((List<ChatRoom>) -> Unit)? = null) {
+        val chatRooms = mutableListOf<ChatRoom>()
+
+        if (chatRoomIds.isEmpty()) {
+            onSuccess?.invoke(chatRooms)
+            return
+        }
+
+        openChatRoomCollectionReference
+                .whereIn(ChatRoom.FIELD_ID, chatRoomIds)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    querySnapshot.documents.forEach {
+                        it.data?.let { data ->
+                            chatRooms.add(convertToChatRoom(data))
+                        }
+                    }
+                    onSuccess?.invoke(chatRooms)
                 }
     }
 }

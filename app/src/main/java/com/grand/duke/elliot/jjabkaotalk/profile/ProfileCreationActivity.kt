@@ -136,10 +136,10 @@ class ProfileCreationActivity: BaseActivity(), SimpleListDialogFragment.Fragment
                 name = name,
                 profilePhotoUris = profilePhotoUris,
                 location = blank,
-                friends = mutableListOf(),
+                friendIds = mutableListOf(),
                 chatRooms = mutableListOf(),
-                openChatRooms = mutableListOf(),
-                verified = viewModel.verified
+                verified = viewModel.verified,
+                blacklist = mutableListOf()
         )
     }
 
