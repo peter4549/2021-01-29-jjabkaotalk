@@ -1,10 +1,7 @@
 package com.grand.duke.elliot.jjabkaotalk.util
 
-import android.os.Parcelable
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.ListenerRegistration
 import java.security.MessageDigest
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -16,14 +13,15 @@ fun Long.toLocalTimeString(): String {
         .apply {
             timeZone = TimeZone.getDefault()
         }
-    val timeFormat = DateFormat.getTimeInstance(DateFormat.SHORT)
+    val timeFormat = SimpleDateFormat("a hh:mm", Locale.getDefault())
         .apply {
             timeZone = TimeZone.getDefault()
         }
 
-    val localDate = dateFormat.format(Date(this))
+    // val localDate = dateFormat.format(Date(this))
     val localTime = timeFormat.format(Date(this))
-    return "$localDate $localTime"
+    // return "$localDate $localTime"
+    return "$localTime "
 }
 
 fun hashString(input: String, algorithm: String = "SHA-256"): String {
@@ -31,3 +29,8 @@ fun hashString(input: String, algorithm: String = "SHA-256"): String {
             .digest(input.toByteArray())
             .fold("", { string, it -> string + "%02x".format(it) })
 }
+
+fun FirebaseFirestoreException?.isNotNull() = this != null
+fun FirebaseFirestoreException?.isNull() = this == null
+
+fun ListenerRegistration?.isNull() = this == null

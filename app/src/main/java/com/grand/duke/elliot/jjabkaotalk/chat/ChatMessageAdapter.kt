@@ -20,7 +20,7 @@ import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.toDateFormat
 import com.grand.duke.elliot.jjabkaotalk.util.toLocalTimeString
 
-class ChatMessageAdapter(private val chatRoom: ChatRoom):
+class ChatMessageAdapter(private var chatRoom: ChatRoom):
         ListAdapter<AdapterItem, ChatMessageAdapter.ViewHolder>(
             AdapterItemDiffCallback()
         ) {
@@ -45,6 +45,13 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
         }
     }
 
+    fun updateChatRoom(chatRoom: ChatRoom) {
+        this.chatRoom = chatRoom
+        this.chatRoom.users.forEach {
+            uidToUser[it.uid] = it
+        }
+    }
+
     inner class ViewHolder(private val binding: ViewDataBinding): RecyclerView.ViewHolder(binding.root) {
 
         fun bind(adapterItem: AdapterItem) {
@@ -57,21 +64,12 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
                         // My chat message.
                         binding as ItemChatRightBinding
                         binding.textMessage.text = adapterItem.chatMessage.message
-                        
+
                         if (unreadCount > 0) {
                             binding.textUnreadCount.visibility = View.VISIBLE
                             binding.textUnreadCount.text = unreadCount.toString()
                         } else
                             binding.textUnreadCount.visibility = View.GONE
-
-                        /*
-                        Toast.makeText(
-                            binding.root.context,
-                            "ap: ${adapterPosition} mine: " + chatMessage.readerIds + " ${chatMessage.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                         */
 
                         binding.textTime.text = chatMessage.time.toLocalTimeString()
                     } else {
@@ -87,14 +85,6 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
                             binding.textUnreadCount.visibility = View.GONE
 
                         binding.textTime.text = chatMessage.time.toLocalTimeString()
-                        /*
-                        Toast.makeText(
-                            binding.root.context,
-                            "ap: ${adapterPosition} others: " + chatMessage.readerIds + " ${chatMessage.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                         */
 
                         binding.imageProfile.setOnClickListener {
                             uidToUser[chatMessage.senderId]?.let { sender ->
@@ -140,8 +130,6 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
                     && it.chatMessage.time == chatMessage.time
         } ?: return
 
-        println("IIIIIIII: $item")
-
         val position = getPosition(item.id)
         notifyItemChanged(position)
     }
@@ -165,7 +153,7 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
 
         for ((index, item) in list.withIndex()) {
             item.time.toDateFormat(
-                context.getString(R.string.year_month_format)
+                context.getString(R.string.year_month_date_format)
             ).let {
                 if (it != yearMonth) {
                     yearMonth = it
@@ -184,6 +172,9 @@ class ChatMessageAdapter(private val chatRoom: ChatRoom):
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         this.recyclerView = recyclerView
+
+        // Disable animation.
+        recyclerView.itemAnimator = null
     }
 
     override fun getItemViewType(position: Int): Int {

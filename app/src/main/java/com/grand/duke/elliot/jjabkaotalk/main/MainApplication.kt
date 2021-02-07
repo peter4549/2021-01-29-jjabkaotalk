@@ -27,7 +27,7 @@ class MainApplication: Application() {
         KakaoSdk.init(this, "bc81e292da6e7b7f70d9b44118abc16c")
         startKoin {
             androidContext(this@MainApplication)
-            modules(getNetWorkModule("https://asia-northeast1-jjabkaotalk.cloudfunctions.net/")) // todo url update.
+            modules(getNetWorkModule("https://asia-northeast1-jjabkaotalk.cloudfunctions.net/"))
         }
     }
 
@@ -54,6 +54,7 @@ class MainApplication: Application() {
         }
 
         var user = MutableLiveData<User?>(null)
+        var location = MutableLiveData<String>("서울")
     }
 
     /*

@@ -26,27 +26,30 @@ class SignInActivity: BaseActivity(), SignInHelper.OnSignInListener {
         super.onCreate(savedInstanceState)
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_sign_in)
+        setDisplayHomeAsUpEnabled(binding.toolbar) {
+            onBackPressed()
+        }
 
         signInHelper = SignInHelper(this)
         signInHelper.setOnSignInListener(this)
 
         /** Facebook Login. */
-        binding.linearLayoutFacebookLogin.setOnClickListener {
+        binding.frameLayoutFacebookLogin.setOnClickListener {
             signInHelper.loginWithFacebook(callbackManager)
         }
 
         /** Google Sign-In. */
-        binding.linearLayoutGoogleSignIn.setOnClickListener {
+        binding.frameLayoutGoogleSignIn.setOnClickListener {
             signInHelper.signInWithGoogle()
         }
 
         /** Kakao Login. */
-        binding.linearLayoutKakaoLogin.setOnClickListener {
+        binding.frameLayoutKakaoLogin.setOnClickListener {
             signInHelper.loginWithKakao(this)
         }
 
         /** Naver Login. */
-        binding.linearLayoutNaverLogin.setOnClickListener {
+        binding.frameLayoutNaverLogin.setOnClickListener {
             signInHelper.loginWithNaver(this)
         }
     }
@@ -93,7 +96,7 @@ class SignInActivity: BaseActivity(), SignInHelper.OnSignInListener {
     }
 
     override fun onNaverLogin(result: Boolean, lastErrorCode: String?, lastErrorDesc: String?) {
-
+        finish()
     }
 
     override fun onCanceled() {

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
+import com.grand.duke.elliot.jjabkaotalk.chat.room.DisplayChatRoomList
 import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
@@ -12,90 +13,82 @@ import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 class MyChatRoomsViewModel: ViewModel(), FireStoreHelper.OnMyChatRoomsSnapshotListener {
 
     private val fireStoreHelper = FireStoreHelper()
-    private var listenerRegistration: ListenerRegistration? = null
 
-    private val _myChatRooms = MutableLiveData<MutableList<ChatRoom>>()
-    val myChatRooms: LiveData<MutableList<ChatRoom>>
-        get() = _myChatRooms
+    private val _displayChatRooms = MutableLiveData<DisplayChatRoomList>()
+    val displayChatRooms: LiveData<DisplayChatRoomList>
+        get() = _displayChatRooms
 
     private val _exception = MutableLiveData<Exception>()
     val exception: LiveData<Exception>
         get() = _exception
 
-    private val _updatedPosition = MutableLiveData<Int>()
-    val updatedPosition: LiveData<Int>
-        get() = _updatedPosition
-
     init {
         fireStoreHelper.setOnMyChatRoomsSnapshotListener(this)
-        _updatedPosition.value = -1
     }
 
-    fun registerMyChatRoomSnapshotListener(user: User) {
-        if (listenerRegistration == null)
-            listenerRegistration = fireStoreHelper.registerMyChatRoomSnapshotListener(user.chatRooms)
-    }
-
-    fun unregisterMyChatRoomSnapshotListener() {
-        listenerRegistration?.remove()
-        listenerRegistration = null
-    }
+    fun registerMyChatRoomSnapshotListener(user: User) = fireStoreHelper.registerMyChatRoomSnapshotListener(user)
 
     override fun onMyChatRoomsSnapshot(documentChanges: List<DocumentChange>) {
+
+        println("AAAA: ${documentChanges.map { fireStoreHelper.convertToChatRoom(it.document.data) }}")
         documentChanges.forEach { documentChange ->
             val chatRoom = fireStoreHelper.convertToChatRoom(documentChange.document.data)
 
-            when(documentChange.type) {
-                DocumentChange.Type.ADDED -> {
-                    val value = mutableListOf<ChatRoom>()
-                    myChatRooms.value?.let { chatRooms ->
-                        chatRooms.forEach { chatRoom ->
-                            value.add(chatRoom.deepCopy())
-                        }
-                    }
+            fireStoreHelper.getUsers(chatRoom.users.map { it.uid }) { users ->
+                chatRoom.users = users.toMutableList()  // Update users.
 
-                    value.add(chatRoom)
-                    _myChatRooms.value = value
+                when(documentChange.type) {
+                    DocumentChange.Type.ADDED -> {
+                        val value = mutableListOf<ChatRoom>()
+                        displayChatRooms.value?.let { chatRooms ->
+                            chatRooms.chatRoomList.forEach { chatRoom ->
+                                value.add(chatRoom.deepCopy())
+                            }
+                        }
+
+                        value.add(chatRoom)
+                        _displayChatRooms.value = DisplayChatRoomList(value, null)
+                    }
+                    DocumentChange.Type.MODIFIED -> update(chatRoom)
+                    DocumentChange.Type.REMOVED -> remove(chatRoom)
                 }
-                DocumentChange.Type.MODIFIED -> update(chatRoom)
-                DocumentChange.Type.REMOVED -> remove(chatRoom)
             }
         }
     }
 
     private fun update(chatRoom: ChatRoom) {
-        myChatRooms.value?.let { chatRooms ->
-            val value = chatRooms.find { it.id == chatRoom.id } ?: return@let
-            val index = chatRooms.indexOf(value)
+        displayChatRooms.value?.let { chatRooms ->
+            val chatRoomList = chatRooms.chatRoomList
+            val value = chatRoomList.find { it.id == chatRoom.id } ?: return@let
+            val index = chatRoomList.indexOf(value)
 
             if (index == -1)
                 return@let
 
-            chatRooms[index] = value
-            _myChatRooms.value = chatRooms
-            _updatedPosition.value = index
+            chatRoomList[index] = chatRoom
+            _displayChatRooms.value = DisplayChatRoomList(chatRoomList, chatRoom)
         }
     }
 
+    fun clear() {
+        _displayChatRooms.value = null
+    }
+
     private fun remove(chatRoom: ChatRoom) {
-        myChatRooms.value?.let { chatRooms ->
-            val value = chatRooms.find { it.id == chatRoom.id }
-            val index = chatRooms.indexOf(value)
+        _displayChatRooms.value?.let { chatRooms ->
+            val chatRoomList = chatRooms.chatRoomList
+            val value = chatRoomList.find { it.id == chatRoom.id }
+            val index = chatRoomList.indexOf(value)
 
             if (index == -1)
                 return@let
 
-            chatRooms.removeAt(index)
-            _myChatRooms.value = chatRooms
+            chatRoomList.removeAt(index)
+            _displayChatRooms.value = DisplayChatRoomList(chatRoomList, null)
         }
     }
 
     override fun onException(exception: Exception) {
         _exception.value = exception
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        listenerRegistration?.remove()
     }
 }

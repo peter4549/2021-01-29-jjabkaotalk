@@ -1,9 +1,15 @@
 package com.grand.duke.elliot.jjabkaotalk.chat.room
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -17,6 +23,12 @@ import com.grand.duke.elliot.jjabkaotalk.databinding.FragmentOpenChatRoomsBindin
 import com.grand.duke.elliot.jjabkaotalk.main.MainActivity
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import com.grand.duke.elliot.jjabkaotalk.main.TabFragmentDirections
+import com.grand.duke.elliot.jjabkaotalk.profile.ProfileCreationActivity
+import com.grand.duke.elliot.jjabkaotalk.settings.SettingsActivity
+import com.grand.duke.elliot.jjabkaotalk.util.blank
+import com.grand.duke.elliot.jjabkaotalk.util.isNull
+import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleItem
+import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleListDialogFragment
 
 class ChatRoomsFragment: BaseFragment() {
 
@@ -34,21 +46,28 @@ class ChatRoomsFragment: BaseFragment() {
         viewModel = ViewModelProvider(viewModelStore, ChatRoomsViewModelFactory())[ChatRoomsViewModel::class.java]
         binding = FragmentOpenChatRoomsBinding.inflate(inflater, container, false)
 
+        binding.toolbar.title = blank
+        initLocationSelector()
+
         setOnOptionsMenu(
                 binding.toolbar,
                 R.menu.menu_open_chat_rooms,
                 arrayOf(
                         R.id.item_create_open_chat_room to {
                             ChatRoomCreationDialogFragment().show(requireActivity().supportFragmentManager, null)
+                        },
+                        R.id.item_settings to {
+                            startSettingsActivity()
                         }
                 )
         )
 
+        /** User. */
         MainApplication.user.observe(viewLifecycleOwner, Observer { user ->
             user?.let {
                 if (listenerRegistration.isNull()) {
-                    listenerRegistration = viewModel.registerChatRoomSnapshotListener()
-                    chatRoomAdapter = ChatRoomAdapter()
+                    listenerRegistration = viewModel.registerChatRoomSnapshotListener(user)
+                    chatRoomAdapter = ChatRoomAdapter(ChatRoomAdapter.Type.public)
                     chatRoomAdapter?.setOnItemClickListener(object :
                         ChatRoomAdapter.OnItemClickListener {
                         override fun onClick(chatRoom: ChatRoom) {
@@ -71,15 +90,21 @@ class ChatRoomsFragment: BaseFragment() {
             updateUi(user)
         })
 
-        viewModel.chatRooms.observe(viewLifecycleOwner, Observer { chatRooms ->
-            chatRooms?.let { chatRoomAdapter?.addDateAndSubmitList(it) }
+        /** Location. */
+        MainApplication.location.observe(viewLifecycleOwner, Observer {
+            it?.let {
+                binding.textLocation.text = it
+            }
         })
 
-        viewModel.updatedPosition.observe(viewLifecycleOwner, Observer {
-            if (it == -1)
-                return@Observer
-            showToast(it.toString())
-            chatRoomAdapter?.notifyItemChanged(it)
+        /** Open Chat Rooms. */
+        viewModel.displayChatRooms.observe(viewLifecycleOwner, Observer { chatRooms ->
+            chatRooms?.let {
+                chatRoomAdapter?.addDateAndSubmitList(it.chatRoomList)
+                it.modifiedChatRoom?.let { chatRoom ->
+                    chatRoomAdapter?.update(chatRoom)
+                }
+            }
         })
 
         viewModel.exception.observe(viewLifecycleOwner, Observer {
@@ -92,6 +117,11 @@ class ChatRoomsFragment: BaseFragment() {
         }
 
         return binding.root
+    }
+
+    private fun startSettingsActivity() {
+        val intent = Intent(requireActivity(), SettingsActivity::class.java)
+        startActivity(intent)
     }
 
     override fun onDestroy() {
@@ -110,6 +140,16 @@ class ChatRoomsFragment: BaseFragment() {
         }
     }
 
+    private fun initLocationSelector() {
+        binding.textLocation.setOnClickListener {
+            val simpleListDialog = SimpleListDialogFragment()
+            val counties = resources.getStringArray(R.array.counties)
+            val simpleItems = counties.map { SimpleItem(it, it) } as ArrayList
+            simpleListDialog.setItems(simpleItems)
+            simpleListDialog.show(requireActivity().supportFragmentManager, null)
+        }
+    }
+
     private fun clear() {
         chatRoomAdapter = null
         binding.recyclerView.adapter = chatRoomAdapter
@@ -117,8 +157,6 @@ class ChatRoomsFragment: BaseFragment() {
         listenerRegistration?.remove()
         listenerRegistration = null
     }
-
-    private fun ListenerRegistration?.isNull() = this == null
 
     companion object {
         @Volatile

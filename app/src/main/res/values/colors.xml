@@ -15,10 +15,16 @@
     <color name="grey_900">#212121</color>
     <color name="red_500">#f44336</color>
     <color name="orange_500">#ff9800</color>
+    <color name="kakao_yellow">#FEE500</color>
+    <color name="naver_green">#1EC800</color>
+    <color name="facebook_blue">#4267b2</color>
 
     <color name="primary_color">@color/light_blue_500</color>
     <color name="secondary_color">@color/light_blue_200</color>
     <color name="error">@color/red_500</color>
+
+    <!-- Toolbar -->
+    <color name="toolbar">@color/white</color>
 
     <!-- Chat -->
     <color name="chat_bubble">@color/light_blue_200</color>
@@ -30,7 +36,7 @@
     <color name="hint_text">@color/grey_500</color>
 
     <!-- Icon -->
-    <color name="icon_enabled">@color/primary_color</color>
+    <color name="icon_enabled">@color/black</color>
     <color name="icon_disabled">@color/grey_500</color>
 
     <!-- Layout Background -->

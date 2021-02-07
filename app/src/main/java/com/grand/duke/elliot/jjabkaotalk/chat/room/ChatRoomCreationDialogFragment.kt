@@ -63,14 +63,15 @@ class ChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpe
         val id =  hashString(uid + creationTime).chunked(32)[0]
 
         return ChatRoom(
-            id = id,
-            name = name,
-            lastMessage = chatMessage,
-            location = "busan", // todo. change here.
-            unreadCounter = mutableMapOf(uid to 0),
-            users = mutableListOf(user),
-            time = creationTime,
-            type = ChatRoom.TYPE_PUBLIC
+                id = id,
+                name = name,
+                lastMessage = chatMessage,
+                location = "busan", // todo. change here.
+                unreadCounter = mutableMapOf(uid to 0),
+                users = mutableListOf(user),
+                userIds = mutableListOf(uid),
+                time = creationTime,
+                type = ChatRoom.TYPE_PUBLIC
         )
     }
 

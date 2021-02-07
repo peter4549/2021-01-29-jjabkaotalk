@@ -15,9 +15,9 @@
     </style>
 
     <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
-        <item name="colorControlNormal">@color/white</item>
-        <item name="android:background">@color/primary_color</item>
-        <item name="android:textColorPrimary">@color/white</item>
-        <item name="android:textColorSecondary">@color/white</item>
+        <item name="colorControlNormal">@color/color_icon</item>
+        <item name="android:background">@color/toolbar</item>
+        <item name="android:textColorPrimary">@color/color_icon</item>
+        <item name="android:textColorSecondary">@color/color_icon</item>
     </style>
 </resources>

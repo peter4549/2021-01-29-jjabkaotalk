@@ -40,7 +40,7 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
         binding = FragmentChatBinding.inflate(inflater, container, false)
 
         val chatFragmentArgs by navArgs<ChatMessagesFragmentArgs>()
-        chatRoom = chatFragmentArgs.chatRoom
+        chatRoom = chatFragmentArgs.chatRoom  // Initial value.
         binding.toolbar.title = chatRoom.name
 
         viewModel = ViewModelProvider(viewModelStore, ChatMessagesViewModelFactory(chatRoom))[ChatMessagesViewModel::class.java]
@@ -52,27 +52,21 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
             layoutManager = LinearLayoutManager(requireContext())
         }
 
+        viewModel.chatRoom.observe(viewLifecycleOwner, Observer {
+            chatRoom = it
+            chatMessageAdapter.updateChatRoom(chatRoom)
+        })
+
         viewModel.displayChatMessages.observe(viewLifecycleOwner, Observer { displayChatMessages ->
             val chatMessages = displayChatMessages.chatMessages
 
             when(displayChatMessages.type) {
-                DocumentChange.Type.ADDED -> {
-                    chatMessageAdapter.addDateAndSubmitList(chatMessages, 0)
-                    showToast("DDDDDDDDD: ${displayChatMessages.changedChatMessage}")
-                }
+                DocumentChange.Type.ADDED -> chatMessageAdapter.addDateAndSubmitList(chatMessages, 0)
                 DocumentChange.Type.MODIFIED -> {
-                    showToast("YOYUYOYOYO: ${displayChatMessages.changedChatMessage}")
-                    println("YOYUYOYOYO: ${displayChatMessages.changedChatMessage}")
-                    println("XXXXXXXXXX: ${displayChatMessages.chatMessages}")
                     chatMessageAdapter.addDateAndSubmitList(chatMessages, 0)
                     displayChatMessages.changedChatMessage?.let { chatMessageAdapter.update(it) }
-                    showToast("YOYUYOYOYO: ${displayChatMessages.changedChatMessage}")
                 }
-                DocumentChange.Type.REMOVED -> {
-                    chatMessageAdapter.addDateAndSubmitList(chatMessages, 0)
-                    showToast("RRRRRRRRR: ${displayChatMessages.changedChatMessage}")
-                }
-
+                DocumentChange.Type.REMOVED -> chatMessageAdapter.addDateAndSubmitList(chatMessages, 0)
             }
         })
 
@@ -93,50 +87,58 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
         binding.buttonSend.isEnabled = false
         val chatMessage = createChatMessage(message, System.currentTimeMillis())
 
+        // Update chatRoom.
+        if (chatRoom.users.map { it.uid }.contains(user.uid).not())
+            viewModel.fireStoreHelper.addUserToChatRoom(chatRoom.id, user) {
+                setChatMessage(chatMessage)
+            }
+        else
+            setChatMessage(chatMessage)
+    }
+
+    private fun setChatMessage(chatMessage: ChatMessage) {
         viewModel.chatMessageCollectionReference.add(chatMessage)
-            .addOnSuccessListener {
-                binding.buttonSend.isEnabled = true
-                val userIds = chatRoom.users.map { it.uid }
+                .addOnSuccessListener {
+                    binding.buttonSend.isEnabled = true
+                    val userIds = chatRoom.users.map { it.uid }
 
-                // Update user.
-                if (user.chatRooms.contains(chatRoom.id).not())
-                    viewModel.fireStoreHelper.userArrayUnion(user.uid, User.FIELD_CHAT_ROOMS, chatRoom.id)
+                    // Update user.
+                    if (user.chatRooms.contains(chatRoom.id).not())
+                        viewModel.fireStoreHelper.userArrayUnion(user.uid, User.FIELD_CHAT_ROOMS, chatRoom.id)
 
-                // Update openChatRoom.
-                if (chatRoom.users.map { it.uid }.contains(user.uid).not())
-                    viewModel.fireStoreHelper.chatRoomArrayUnion(chatRoom.id, ChatRoom.FIELD_USERS, user)
 
-                // Send cloud message.
-                cloudMessagingHelper.sendCloudMessage(message, chatRoom, user)
 
-                // Update unreadCounter.
-                for (uid in userIds) {
-                    if (uid != user.uid) {
-                        chatRoom.let {
-                            it.unreadCounter[uid] = it.unreadCounter[uid]?.plus(1) ?: 0
+                    // Send cloud message.
+                    cloudMessagingHelper.sendCloudMessage(chatMessage.message, chatRoom, user)
+
+                    // Update unreadCounter.
+                    for (uid in userIds) {
+                        if (uid != user.uid) {
+                            chatRoom.let {
+                                it.unreadCounter[uid] = it.unreadCounter[uid]?.plus(1) ?: 0
+                            }
                         }
                     }
-                }
 
-                // Update lastMessage.
-                chatRoom.lastMessage = chatMessage
-                viewModel.openChatRoomDocumentReference
-                    .update(mapOf(
-                        FIELD_LAST_MESSAGE to chatRoom.lastMessage,
-                        FIELD_UNREAD_COUNTER to chatRoom.unreadCounter
-                    ))
-                    .addOnSuccessListener {
-                        Timber.d("lastMessage and unreadCounter updated.")
-                    }
-                    .addOnFailureListener {
-                        Timber.w("lastMessage and unreadCounter update failed.")
-                    }
-            }
-            .addOnFailureListener {
-                Timber.e(it)
-                showToast(getString(R.string.failed_to_send_message) + ": ${it.message}")
-                binding.buttonSend.isEnabled = true
-            }
+                    // Update lastMessage.
+                    chatRoom.lastMessage = chatMessage
+                    viewModel.openChatRoomDocumentReference
+                            .update(mapOf(
+                                    FIELD_LAST_MESSAGE to chatRoom.lastMessage,
+                                    FIELD_UNREAD_COUNTER to chatRoom.unreadCounter
+                            ))
+                            .addOnSuccessListener {
+                                Timber.d("lastMessage and unreadCounter updated.")
+                            }
+                            .addOnFailureListener {
+                                Timber.w("lastMessage and unreadCounter update failed.")
+                            }
+                }
+                .addOnFailureListener {
+                    Timber.e(it)
+                    showToast(getString(R.string.failed_to_send_message) + ": ${it.message}")
+                    binding.buttonSend.isEnabled = true
+                }
     }
 
     private fun createChatMessage(message: String, time: Long): ChatMessage =

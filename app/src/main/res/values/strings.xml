@@ -13,7 +13,7 @@
     <string name="facebook_app_id">2757875477807015</string> <string name="fb_login_protocol_scheme">fb2757875477807015</string>
 
     <!-- Format -->
-    <string name="year_month_format">yyyy년 M월</string>
+    <string name="year_month_date_format">yyyy년 M월 d일</string>
 
     <!-- ProfileCreationActivity -->
     <string name="name">이름</string>
@@ -54,7 +54,9 @@
     <string name="add_to_friends">친구추가</string>
     <string name="block">차단</string>
     <string name="friend_added">친구가 추가되었습니다.</string>
+    <string name="friends">친구</string>
 
     <!-- MyChatRoomsFragment -->
     <string name="failed_to_load_chat_rooms">채팅방을 불러오지 못했습니다.</string>
+    <string name="my_chat">내 채팅</string>
 </resources>

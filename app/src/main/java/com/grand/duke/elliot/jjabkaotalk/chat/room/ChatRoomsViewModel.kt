@@ -8,41 +8,33 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
+import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import timber.log.Timber
 
 class ChatRoomsViewModel: ViewModel(), FireStoreHelper.OnOpenChatRoomSnapshotListener {
 
     private val fireStoreHelper = FireStoreHelper()
 
-    private val _user = MutableLiveData<User?>()
-    val user: LiveData<User?>
-        get() = _user
-
-    private val _chatRooms = MutableLiveData<MutableList<ChatRoom>>()
-    val chatRooms: LiveData<MutableList<ChatRoom>>
-        get() = _chatRooms
+    private val _displayChatRooms = MutableLiveData<DisplayChatRoomList>()
+    val displayChatRooms: LiveData<DisplayChatRoomList>
+        get() = _displayChatRooms
 
     private val _exception = MutableLiveData<Exception>()
     val exception: LiveData<Exception>
         get() = _exception
 
-    private val _updatedPosition = MutableLiveData<Int>()
-    val updatedPosition: LiveData<Int>
-        get() = _updatedPosition
-
-    init {
-        _updatedPosition.value = -1
-    }
-
-    fun registerChatRoomSnapshotListener(): ListenerRegistration {
+    fun registerChatRoomSnapshotListener(user: User): ListenerRegistration {
         fireStoreHelper.setOnOpenChatRoomSnapshotListener(this)
         return fireStoreHelper.registerOpenChatRoomSnapshotListener("busan") // todo. test city.
     }
 
     /** FireStoreHelper.OnOpenChatRoomSnapshotListener */
     override fun onOpenChatRoomDocumentSnapshot(documentChanges: List<DocumentChange>) {
-        documentChanges.forEach { documentChange ->
+        for (documentChange in documentChanges) {
             val openChatRoom = fireStoreHelper.convertToChatRoom(documentChange.document.data)
+
+            if (MainApplication.user.value?.chatRooms?.contains(openChatRoom.id) == true)
+                continue
 
             fireStoreHelper.getUsers(openChatRoom.users.map { it.uid }) { users ->
                 openChatRoom.users = users.toMutableList()  // Update users.
@@ -50,14 +42,18 @@ class ChatRoomsViewModel: ViewModel(), FireStoreHelper.OnOpenChatRoomSnapshotLis
                 when(documentChange.type) {
                     DocumentChange.Type.ADDED -> {
                         val value = mutableListOf<ChatRoom>()
-                        chatRooms.value?.let { chatRooms ->
-                            chatRooms.forEach { chatRoom ->
-                                value.add(chatRoom.deepCopy())
+                        displayChatRooms.value?.let { chatRooms ->
+                            chatRooms.chatRoomList.forEach { chatRoom ->
+                                try {
+                                    value.add(chatRoom.deepCopy())
+                                } catch (e: java.lang.Exception) {
+                                    Timber.e(e)
+                                }
                             }
                         }
 
                         value.add(openChatRoom)
-                        _chatRooms.value = value
+                        _displayChatRooms.value = DisplayChatRoomList(value, null)
                     }
                     DocumentChange.Type.MODIFIED -> update(openChatRoom)
                     DocumentChange.Type.REMOVED -> remove(openChatRoom)
@@ -67,33 +63,34 @@ class ChatRoomsViewModel: ViewModel(), FireStoreHelper.OnOpenChatRoomSnapshotLis
     }
 
     private fun update(chatRoom: ChatRoom) {
-        chatRooms.value?.let { chatRooms ->
-            val value = chatRooms.find { it.id == chatRoom.id } ?: return@let
-            val index = chatRooms.indexOf(value)
+        displayChatRooms.value?.let { chatRooms ->
+            val chatRoomList = chatRooms.chatRoomList
+            val value = chatRoomList.find { it.id == chatRoom.id } ?: return@let
+            val index = chatRoomList.indexOf(value)
 
             if (index == -1)
                 return@let
 
-            chatRooms[index] = value
-            _chatRooms.value = chatRooms
-            _updatedPosition.value = index
+            chatRoomList[index] = chatRoom
+            _displayChatRooms.value = DisplayChatRoomList(chatRoomList, chatRoom)
         }
     }
 
     fun clear() {
-        _chatRooms.value = null
+        _displayChatRooms.value = null
     }
 
     private fun remove(chatRoom: ChatRoom) {
-        chatRooms.value?.let { chatRooms ->
-            val value = chatRooms.find { it.id == chatRoom.id }
-            val index = chatRooms.indexOf(value)
+        _displayChatRooms.value?.let { chatRooms ->
+            val chatRoomList = chatRooms.chatRoomList
+            val value = chatRoomList.find { it.id == chatRoom.id }
+            val index = chatRoomList.indexOf(value)
 
             if (index == -1)
                 return@let
 
-            chatRooms.removeAt(index)
-            _chatRooms.value = chatRooms
+            chatRoomList.removeAt(index)
+            _displayChatRooms.value = DisplayChatRoomList(chatRoomList, null)
         }
     }
 
@@ -102,3 +99,8 @@ class ChatRoomsViewModel: ViewModel(), FireStoreHelper.OnOpenChatRoomSnapshotLis
         _exception.value = exception
     }
 }
+
+data class DisplayChatRoomList(
+        var chatRoomList: MutableList<ChatRoom>,
+        var modifiedChatRoom: ChatRoom?
+)

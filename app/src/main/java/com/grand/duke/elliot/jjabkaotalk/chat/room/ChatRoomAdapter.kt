@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -21,8 +20,9 @@ import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.toDateFormat
 import com.grand.duke.elliot.jjabkaotalk.util.toLocalTimeString
+import java.util.*
 
-class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
+class ChatRoomAdapter(private val type: Int): ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
     AdapterItemDiffCallback()
 ) {
     private lateinit var recyclerView: RecyclerView
@@ -36,6 +36,11 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
         fun onClick(chatRoom: ChatRoom)
     }
 
+    object Type {
+        const val private = 0
+        const val public = 1
+    }
+
     inner class ViewHolder constructor(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(adapterItem: AdapterItem) {
@@ -47,7 +52,8 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
                     val users = chatRoom.users
                     val userNames = users.joinToString(", ") { it.name }
 
-                    // todo. change to name..
+                    // Profile Photos.
+                    setProfilePhotos(chatRoom)
 
                     if (chatRoom.type == ChatRoom.TYPE_PRIVATE)
                         binding.textUserNames.text = userNames
@@ -55,10 +61,22 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
                         binding.textUserNames.text = chatRoom.name
 
                     binding.textLastMessage.text = chatRoom.lastMessage.message
+
                     binding.textUserCount.text = users.count().toString()
 
                     binding.textTime.text = chatRoom.lastMessage.time.toLocalTimeString()
-                    binding.textUnreadCount.text = chatRoom.unreadCounter[MainApplication.user.value?.uid].toString()
+
+                    val unreadCount = chatRoom.unreadCounter[MainApplication.user.value?.uid]
+                    unreadCount?.let {
+                        if (it > 0) {
+                            binding.textUnreadCount.visibility = View.VISIBLE
+                            binding.textUnreadCount.text = it.toString()
+                        } else
+                            binding.textUnreadCount.visibility = View.GONE
+                    } ?: run {
+                        binding as ItemChatRoomBinding
+                        binding.textUnreadCount.visibility = View.GONE
+                    }
 
                     binding.root.setOnClickListener {
                         onItemClickListener?.onClick(adapterItem.chatRoom)
@@ -67,37 +85,82 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
             }
         }
 
-        fun setProfilePhotos(chatRoom: ChatRoom) {
+        private fun setProfilePhotos(chatRoom: ChatRoom) {
             binding as ItemChatRoomBinding
+            val users =  chatRoom.users
 
-            if (chatRoom.users.count() == 1) {
-                binding.imageProfilePhotos.visibility = View.VISIBLE
-                binding.constraintLayout2profilePhotos.visibility = View.GONE
-                binding.constraintLayout3profilePhotos.visibility = View.GONE
-                binding.constraintLayout4profilePhotos.visibility = View.GONE
-                chatRoom.users[0].profilePhotoUris.let {
-                    if (it.isNotEmpty())
-                        setImage(binding.imageProfilePhotos, it[0])
+            when {
+                users.count() == 1 -> {
+                    binding.imageProfilePhotos.visibility = View.VISIBLE
+                    binding.constraintLayout2profilePhotos.visibility = View.GONE
+                    binding.constraintLayout3profilePhotos.visibility = View.GONE
+                    binding.constraintLayout4profilePhotos.visibility = View.GONE
+                    users[0].profilePhotoUris.let {
+                        if (it.isNotEmpty())
+                            setImage(binding.imageProfilePhotos, it[0])
+                    }
                 }
-            } else if (chatRoom.users.count() == 2) {
-                binding.imageProfilePhotos.visibility = View.GONE
-                binding.constraintLayout2profilePhotos.visibility = View.VISIBLE
-                binding.constraintLayout3profilePhotos.visibility = View.GONE
-                binding.constraintLayout4profilePhotos.visibility = View.GONE
-            } else if (chatRoom.users.count() == 3) {
-                binding.imageProfilePhotos.visibility = View.GONE
-                binding.constraintLayout2profilePhotos.visibility = View.GONE
-                binding.constraintLayout3profilePhotos.visibility = View.VISIBLE
-                binding.constraintLayout4profilePhotos.visibility = View.GONE
-            } else if (chatRoom.users.count() >= 4) {
-                binding.imageProfilePhotos.visibility = View.GONE
-                binding.constraintLayout2profilePhotos.visibility = View.GONE
-                binding.constraintLayout3profilePhotos.visibility = View.GONE
-                binding.constraintLayout4profilePhotos.visibility = View.VISIBLE
+                users.count() == 2 -> {
+                    binding.imageProfilePhotos.visibility = View.GONE
+                    binding.constraintLayout2profilePhotos.visibility = View.VISIBLE
+                    binding.constraintLayout3profilePhotos.visibility = View.GONE
+                    binding.constraintLayout4profilePhotos.visibility = View.GONE
+
+                    val user0 = users[0]
+                    val user1 = users[1]
+
+                    if (user0.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image2profilePhotos1, user0.profilePhotoUris[0])
+
+                    if (user1.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image2profilePhotos2, user1.profilePhotoUris[0])
+                }
+                users.count() == 3 -> {
+                    binding.imageProfilePhotos.visibility = View.GONE
+                    binding.constraintLayout2profilePhotos.visibility = View.GONE
+                    binding.constraintLayout3profilePhotos.visibility = View.VISIBLE
+                    binding.constraintLayout4profilePhotos.visibility = View.GONE
+
+                    val user0 = users[0]
+                    val user1 = users[1]
+                    val user2 = users[1]
+
+                    if (user0.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image3profilePhotos1, user0.profilePhotoUris[0])
+
+                    if (user1.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image3profilePhotos2, user1.profilePhotoUris[0])
+
+                    if (user2.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image3profilePhotos3, user2.profilePhotoUris[0])
+                }
+                users.count() >= 4 -> {
+                    binding.imageProfilePhotos.visibility = View.GONE
+                    binding.constraintLayout2profilePhotos.visibility = View.GONE
+                    binding.constraintLayout3profilePhotos.visibility = View.GONE
+                    binding.constraintLayout4profilePhotos.visibility = View.VISIBLE
+
+                    val user0 = users[0]
+                    val user1 = users[1]
+                    val user2 = users[2]
+                    val user3 = users[3]
+
+                    if (user0.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image4profilePhotos1, user0.profilePhotoUris[0])
+
+                    if (user1.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image4profilePhotos2, user1.profilePhotoUris[0])
+
+                    if (user2.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image4profilePhotos3, user2.profilePhotoUris[0])
+
+                    if (user3.profilePhotoUris.isNotEmpty())
+                        setImage(binding.image4profilePhotos4, user3.profilePhotoUris[0])
+                }
             }
         }
 
-        fun setImage(imageView: ImageView, uri: String) {
+        private fun setImage(imageView: ImageView, uri: String) {
             Glide.with(imageView.context)
                 .load(uri)
                 .centerCrop()
@@ -124,12 +187,14 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
         if (list.isNullOrEmpty())
             return
 
+        sort(list)
+
         val items = arrayListOf<AdapterItem>()
         var yearMonth = blank
 
         for ((index, item) in list.withIndex()) {
             item.time.toDateFormat(
-                    recyclerView.context.getString(R.string.year_month_format)
+                    recyclerView.context.getString(R.string.year_month_date_format)
             ).let {
                 if (it != yearMonth) {
                     yearMonth = it
@@ -137,7 +202,6 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
                 }
             }
 
-            // TODO. load user data by userIds.
             items.add(AdapterItem.OpenChatRoomItem(item.id, item))
         }
 
@@ -145,9 +209,34 @@ class ChatRoomAdapter: ListAdapter<AdapterItem, ChatRoomAdapter.ViewHolder>(
         submitList(items)
     }
 
+    fun update(chatRoom: ChatRoom) {
+        for ((index, item) in currentList.withIndex()) {
+            if (item is AdapterItem.OpenChatRoomItem) {
+                if (item.chatRoom.id == chatRoom.id) {
+                    notifyItemChanged(index)
+                }
+            }
+        }
+    }
+
+    @Suppress("JavaCollectionsStaticMethodOnImmutableList")
+    private fun sort(list: List<ChatRoom>) {
+        Collections.sort(list
+        ) { o1: ChatRoom, o2: ChatRoom ->
+            when (type) {
+                Type.private -> (o2.lastMessage.time - o1.lastMessage.time).toInt()
+                Type.public -> (o2.time - o1.time).toInt()
+                else -> 0
+            }
+        }
+    }
+
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         this.recyclerView = recyclerView
+
+        // Disable animation.
+        recyclerView.itemAnimator = null
     }
 
     override fun getItemViewType(position: Int): Int {

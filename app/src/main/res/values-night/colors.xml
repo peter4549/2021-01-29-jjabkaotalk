@@ -17,6 +17,9 @@
     <color name="secondary_color">@color/light_blue_200</color>
     <color name="error">@color/red_500</color>
 
+    <!-- Toolbar -->
+    <color name="toolbar">@color/black</color>
+
     <!-- Chat -->
     <color name="chat_bubble">@color/light_blue_200</color>
 
@@ -27,7 +30,7 @@
     <color name="hint_text">@color/grey_500</color>
 
     <!-- Icon -->
-    <color name="icon_enabled">@color/primary_color</color>
+    <color name="icon_enabled">@color/white</color>
     <color name="icon_disabled">@color/grey_500</color>
 
     <!-- Layout Background -->

@@ -211,12 +211,27 @@ class FireStoreHelper {
                 }
     }
 
-    fun registerMyChatRoomSnapshotListener(chatRoomIds: List<String>): ListenerRegistration? {
-        if (chatRoomIds.isEmpty())
+    fun addUserToChatRoom(documentId: String, user: User, onSuccess: (() -> Unit)?) {
+        openChatRoomCollectionReference.document(documentId)
+                .update(mapOf(
+                        ChatRoom.FIELD_USERS to FieldValue.arrayUnion(user),
+                        ChatRoom.FIELD_USER_IDS to FieldValue.arrayUnion(user.uid)
+                ))
+                .addOnSuccessListener {
+                    onSuccess?.invoke()
+                    Timber.d("ChatRoom updated.")
+                }
+                .addOnFailureListener {
+                    Timber.w("ChatRoom update failed.")
+                }
+    }
+
+    fun registerMyChatRoomSnapshotListener(user: User): ListenerRegistration? {
+        if (user.chatRooms.isEmpty())
             return null
 
         return openChatRoomCollectionReference
-                .whereIn(ChatRoom.FIELD_ID, chatRoomIds)
+                .whereArrayContains(ChatRoom.FIELD_USER_IDS, user.uid)
                 .addSnapshotListener { value: QuerySnapshot?, error: FirebaseFirestoreException? ->
                     error?.let {
                         onOpenChatRoomSnapshotListener?.onException(it)
@@ -232,9 +247,8 @@ class FireStoreHelper {
                 }
     }
 
-
-    @Suppress("unused")
-    fun getMyChatRooms(chatRoomIds: List<String>, onSuccess: ((List<ChatRoom>) -> Unit)? = null) {
+    fun getMyChatRooms(user: User, onSuccess: ((List<ChatRoom>) -> Unit)? = null) {
+        val chatRoomIds = user.chatRooms
         val chatRooms = mutableListOf<ChatRoom>()
 
         if (chatRoomIds.isEmpty()) {
@@ -243,7 +257,7 @@ class FireStoreHelper {
         }
 
         openChatRoomCollectionReference
-                .whereIn(ChatRoom.FIELD_ID, chatRoomIds)
+                .whereArrayContains(ChatRoom.FIELD_USERS, user.uid)
                 .get()
                 .addOnSuccessListener { querySnapshot ->
                     querySnapshot.documents.forEach {

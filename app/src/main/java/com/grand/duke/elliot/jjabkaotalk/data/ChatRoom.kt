@@ -10,6 +10,7 @@ data class ChatRoom (
         var lastMessage: ChatMessage,
         var location: String,
         val unreadCounter: MutableMap<String, Int>,
+        var userIds: MutableList<String>,
         var users: MutableList<User>,
         val time: Long,
         val type: Int
@@ -18,6 +19,7 @@ data class ChatRoom (
     fun deepCopy(): ChatRoom {
         val unreadCounter = HashMap(this.unreadCounter)
         val users = this.users.map { it.deepCopy() }.toMutableList()
+        val userIds = this.userIds.map{ it }.toMutableList()
 
         return ChatRoom(
                 id = this.id,
@@ -26,6 +28,7 @@ data class ChatRoom (
                 location = this.location,
                 unreadCounter = unreadCounter,
                 users = users,
+                userIds = userIds,
                 time = this.time,
                 type = this.type
         )
@@ -37,6 +40,8 @@ data class ChatRoom (
         const val FIELD_LOCATION = "location"
         const val FIELD_UNREAD_COUNTER = "unreadCounter"
         const val FIELD_USERS = "users"
+        const val FIELD_USER_IDS = "userIds"
+        const val FIELD_TIME = "time"
 
         const val TYPE_PRIVATE = 1
         const val TYPE_PUBLIC = 0

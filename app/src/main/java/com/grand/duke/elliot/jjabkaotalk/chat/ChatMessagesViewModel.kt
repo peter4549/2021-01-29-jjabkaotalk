@@ -18,6 +18,8 @@ import timber.log.Timber
 class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
 
     private lateinit var listenerRegistration: ListenerRegistration
+    private lateinit var chatRoomSnapshotListenerRegistration: ListenerRegistration
+
     val fireStoreHelper = FireStoreHelper()
     val openChatRoomDocumentReference = FirebaseFirestore.getInstance()
             .collection(Collection.ChatRooms)
@@ -26,6 +28,7 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
 
     init {
         setChatMessageSnapshotListener(chatRoom)
+        chatRoomSnapshotListenerRegistration = registerChatRoomSnapshotListener()
     }
 
     @Suppress("SpellCheckingInspection")
@@ -33,6 +36,10 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
     private val _displayChatMessages = MutableLiveData<DisplayChatMessages>()
     val displayChatMessages: LiveData<DisplayChatMessages>
         get() = _displayChatMessages
+
+    private val _chatRoom = MutableLiveData<ChatRoom>()
+    val chatRoom: LiveData<ChatRoom>
+        get() = _chatRoom
 
     private val user = MainApplication.user.value ?: throw NullPointerException("ChatMessageAdapter: MainApplication.user is null.")
 
@@ -73,6 +80,23 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
             }
     }
 
+    private fun registerChatRoomSnapshotListener(): ListenerRegistration {
+        return openChatRoomDocumentReference
+                .addSnapshotListener { snapshot, exception ->
+                    if (exception.isNotNull()) {
+                        Timber.e(exception, "Add snapshot listener failed.")
+                        return@addSnapshotListener
+                    }
+
+                    snapshot?.let {
+                        val chatRoom = it.data?.toChatRoom()
+                        chatRoom?.let { room ->
+                            _chatRoom.value = room
+                        }
+                    }
+                }
+    }
+
     private fun update(chatMessage: ChatMessage) {
         displayChatMessages.value?.let { displayChatMessages ->
             val chatMessages = displayChatMessages.chatMessages
@@ -84,10 +108,8 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
             if (index == -1)
                 return@let
 
-            println("UUUUUUUUUUUUUUUU: ${value}")
             value?.let {
                 chatMessages[index] = chatMessage
-                println("MMMMMMMMMMMupdate: ${chatMessages[index]}")
                 _displayChatMessages.value = displayChatMessages.apply {
                     this.chatMessages = chatMessages
                     this.type = DocumentChange.Type.MODIFIED
@@ -117,6 +139,8 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
         }
     }
 
+
+    private fun Map<String, Any>.toChatRoom() = gson.fromJson(JSONObject(this).toString(), ChatRoom::class.java)
     private fun Map<String, Any>.toChatMessage(chatMessageDocumentId: String? = null): ChatMessage? {
         val chatMessage = gson.fromJson(JSONObject(this).toString(), ChatMessage::class.java)
             ?: return null
@@ -165,6 +189,9 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
     private fun removeListenerRegistration() {
         if (this::listenerRegistration.isInitialized)
             listenerRegistration.remove()
+
+        if (this::chatRoomSnapshotListenerRegistration.isInitialized)
+            chatRoomSnapshotListenerRegistration.remove()
     }
 }
 

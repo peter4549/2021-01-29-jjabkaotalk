@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseUser
@@ -22,9 +23,11 @@ import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.friends.FriendsFragment
 import com.grand.duke.elliot.jjabkaotalk.profile.ProfileCreationActivity
 import com.grand.duke.elliot.jjabkaotalk.sign_in.SignInActivity
+import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleItem
+import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleListDialogFragment
 import timber.log.Timber
 
-class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshotListener {
+class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshotListener, SimpleListDialogFragment.FragmentContainer{
 
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: ActivityMainBinding
@@ -140,4 +143,15 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
         const val EXTRA_NAME_USER = "com.grand.duke.elliot.jjabkaotalk.main" +
                 ".main_activity.extra_name_user"
     }
+
+    override fun onRequestOnItemSelectedListener():
+            SimpleListDialogFragment.OnItemSelectedListener =  object: SimpleListDialogFragment.OnItemSelectedListener {
+        override fun onItemSelected(dialogFragment: DialogFragment, simpleItem: SimpleItem) {
+            MainApplication.location.value = simpleItem.name
+            dialogFragment.dismiss()
+        }
+    }
+
+    override fun onRequestOnScrollReachedBottom():
+            SimpleListDialogFragment.OnScrollReachedBottomListener? = null
 }

@@ -22,6 +22,8 @@ import com.kakao.sdk.auth.AuthCodeClient
 import com.kakao.sdk.auth.rx
 import com.nhn.android.naverlogin.OAuthLogin
 import com.nhn.android.naverlogin.OAuthLoginHandler
+import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.addTo
 import io.reactivex.schedulers.Schedulers
 import org.koin.java.KoinJavaComponent.get
 import retrofit2.Retrofit
@@ -179,14 +181,37 @@ class SignInHelper(private val signInActivity: SignInActivity) {
             NaverApi.ClientSecret,
             NaverApi.ClientId
         )
+
         oAuthLogin.startOauthLoginActivity(activity, @SuppressLint("HandlerLeak")
         object: OAuthLoginHandler() {
+            @SuppressLint("CheckResult")
             override fun run(success: Boolean) {
                 if (success) {
                     val accessToken: String = oAuthLogin.getAccessToken(activity)
                     val refreshToken: String = oAuthLogin.getRefreshToken(activity)
                     val expiresAt: Long = oAuthLogin.getExpiresAt(activity)
                     val tokenType: String = oAuthLogin.getTokenType(activity)
+
+                    get(Retrofit::class.java).create(FirebaseCustomTokenApi.FirebaseCustomTokenService::class.java)
+                            .getFirebaseNaverCustomToken(accessToken)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(Schedulers.single())
+                            .subscribe({ firebaseToken ->
+                                val auth = FirebaseAuth.getInstance()
+                                auth.signInWithCustomToken(firebaseToken.firebase_token)
+                                        .addOnCompleteListener { task ->
+                                            if (task.isSuccessful) {
+                                                Timber.d("Naver login successful.")
+                                                onSignInListener?.onNaverLogin(true)
+                                            } else {
+                                                Timber.e(task.exception, "Naver login failed.")
+                                                onSignInListener?.onNaverLogin(false, null, null)
+                                            }
+                                        }
+                            }, {
+                                Timber.e(it, "Naver login failed.")
+                                onSignInListener?.onNaverLogin(false, null, null)
+                            })
                 } else {
                     val lastErrorCode: String = oAuthLogin.getLastErrorCode(activity).code
                     val lastErrorDesc: String = oAuthLogin.getLastErrorDesc(activity)

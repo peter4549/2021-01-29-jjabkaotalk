@@ -6,19 +6,25 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.firestore.ListenerRegistration
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.base.BaseFragment
 import com.grand.duke.elliot.jjabkaotalk.chat.room.ChatRoomAdapter
+import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.databinding.FragmentMyChatRoomsBinding
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import com.grand.duke.elliot.jjabkaotalk.main.TabFragmentDirections
+import com.grand.duke.elliot.jjabkaotalk.util.isNull
 
 class MyChatRoomsFragment: BaseFragment() {
 
     private lateinit var viewModel: MyChatRoomsViewModel
     private lateinit var binding: FragmentMyChatRoomsBinding
     private var chatRoomAdapter: ChatRoomAdapter? = null
+    private var listenerRegistration: ListenerRegistration? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentMyChatRoomsBinding.inflate(inflater, container, false)
@@ -28,28 +34,61 @@ class MyChatRoomsFragment: BaseFragment() {
             showToast(getString(R.string.failed_to_load_chat_rooms) + ": ${it.message}")
         })
 
-        viewModel.myChatRooms.observe(viewLifecycleOwner, Observer {
-            chatRoomAdapter?.addDateAndSubmitList(it)
-        })
-
-        viewModel.updatedPosition.observe(viewLifecycleOwner, Observer {
-            if (it != -1)
-                chatRoomAdapter?.notifyItemChanged(it)
-        })
-
         MainApplication.user.observe(viewLifecycleOwner, Observer { user ->
+            showToast(user?.name.toString())
             user?.let {
-                viewModel.registerMyChatRoomSnapshotListener(it)
-            } ?: run {
-                viewModel.unregisterMyChatRoomSnapshotListener()
-            }
+                if (listenerRegistration.isNull()) {
+                    listenerRegistration = viewModel.registerMyChatRoomSnapshotListener(user)
+                    chatRoomAdapter = ChatRoomAdapter(ChatRoomAdapter.Type.private)
+                    chatRoomAdapter?.setOnItemClickListener(object :
+                            ChatRoomAdapter.OnItemClickListener {
+                        override fun onClick(chatRoom: ChatRoom) {
+                            findNavController().navigate(
+                                    TabFragmentDirections.actionTabFragmentToOpenChatFragment(
+                                            chatRoom
+                                    )
+                            )
+                        }
+                    })
 
-            updateUi(user)
+                    binding.recyclerView.apply {
+                        adapter = chatRoomAdapter
+                        layoutManager = LinearLayoutManager(requireContext())
+                    }
+                }
+            } ?: run {
+               clear()
+            }
+            //updateUi(user)
+        })
+
+        viewModel.displayChatRooms.observe(viewLifecycleOwner, Observer { chatRooms ->
+            chatRooms?.let {
+                chatRoomAdapter?.addDateAndSubmitList(it.chatRoomList)
+                it.modifiedChatRoom?.let { chatRoom ->
+                    chatRoomAdapter?.update(chatRoom)
+                }
+            }
         })
 
         return binding.root
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        listenerRegistration?.remove()
+        listenerRegistration = null
+    }
+
+    private fun clear() {
+        chatRoomAdapter = null
+        binding.recyclerView.adapter = chatRoomAdapter
+        viewModel.clear()
+        listenerRegistration?.remove()
+        listenerRegistration = null
+    }
+
+    /*
     private fun updateUi(user: User?) {
         user?.let {
             chatRoomAdapter = ChatRoomAdapter()
@@ -63,6 +102,8 @@ class MyChatRoomsFragment: BaseFragment() {
             binding.recyclerView.adapter = chatRoomAdapter
         }
     }
+
+     */
 
 
     companion object {

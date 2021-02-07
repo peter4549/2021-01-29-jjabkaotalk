@@ -145,7 +145,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/spacing_small"
-            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_medium"
             android:layout_marginTop="@dimen/spacing_small"
             app:layout_constraintEnd_toStartOf="@+id/text_time"
             app:layout_constraintStart_toEndOf="@+id/frameLayout_profilePhotos"
@@ -166,9 +166,11 @@
                 android:id="@+id/text_userCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
                 android:layout_marginStart="@dimen/spacing_small"
                 android:layout_toEndOf="@+id/text_userNames"
                 android:gravity="center_vertical"
+                android:textSize="@dimen/text_size_extra_small"
                 tools:text="4" />
         </RelativeLayout>
 
@@ -178,9 +180,9 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_marginTop="@dimen/spacing_small"
-            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_marginEnd="@dimen/spacing_medium"
             android:gravity="center_vertical"
-            android:textSize="@dimen/text_size_small"
+            android:textSize="@dimen/text_size_extra_small"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="2020.02.06" />
@@ -189,7 +191,7 @@
             android:id="@+id/text_lastMessage"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_medium"
             android:layout_marginTop="@dimen/spacing_extra_small"
             android:layout_marginEnd="@dimen/spacing_small"
             android:layout_marginBottom="@dimen/spacing_small"
@@ -206,11 +208,14 @@
             android:id="@+id/text_unreadCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_medium"
-            android:textColor="@color/orange_500"
-            android:textSize="@dimen/text_size_small"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:background="@drawable/unread_background"
+            android:gravity="center_horizontal|top"
+            android:textColor="@color/white"
+            android:textSize="@dimen/text_size_extra_small"
+            android:textStyle="bold"
             app:layout_constraintStart_toEndOf="@+id/text_lastMessage"
             app:layout_constraintTop_toTopOf="@+id/text_lastMessage"
-            tools:text="999+" />
+            tools:text="1" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
