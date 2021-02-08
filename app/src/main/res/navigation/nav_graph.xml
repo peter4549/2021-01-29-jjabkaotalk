@@ -10,6 +10,9 @@
         <action
             android:id="@+id/action_tabFragment_to_openChatFragment"
             app:destination="@id/openChatFragment" />
+        <action
+            android:id="@+id/action_tabFragment_to_friendProfileFragment"
+            app:destination="@id/friendProfileFragment" />
     </fragment>
 
     <fragment
@@ -30,6 +33,15 @@
         android:name="com.grand.duke.elliot.jjabkaotalk.profile.ProfileFragment"
         android:label="ProfileFragment">
 
+        <argument
+            android:name="user"
+            app:argType="com.grand.duke.elliot.jjabkaotalk.data.User"
+            app:nullable="false" />
+    </fragment>
+    <fragment
+        android:id="@+id/friendProfileFragment"
+        android:name="com.grand.duke.elliot.jjabkaotalk.profile.friend.FriendProfileFragment"
+        android:label="FriendProfileFragment" >
         <argument
             android:name="user"
             app:argType="com.grand.duke.elliot.jjabkaotalk.data.User"

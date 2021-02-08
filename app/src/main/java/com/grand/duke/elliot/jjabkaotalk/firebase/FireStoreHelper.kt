@@ -6,9 +6,13 @@ import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
 import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import timber.log.Timber
-import kotlin.NullPointerException
+
 
 class FireStoreHelper {
 
@@ -18,6 +22,9 @@ class FireStoreHelper {
 
     private val openChatRoomCollectionReference = FirebaseFirestore.getInstance().collection(Collection.ChatRooms)
     private val userCollectionReference = FirebaseFirestore.getInstance().collection(Collection.Users)
+
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + job)
 
     private var onOpenChatRoomSnapshotListener: OnOpenChatRoomSnapshotListener? = null
     private var onUserDocumentSnapshotListener: OnUserDocumentSnapshotListener? = null
@@ -188,6 +195,50 @@ class FireStoreHelper {
                 }
     }
 
+    fun leaveChatRoom(user: User, chatRoom: ChatRoom, delete: Boolean, onComplete: (exception: Exception?) -> Unit) {
+        val chatRoomDocumentReference = openChatRoomCollectionReference.document(chatRoom.id)
+        userCollectionReference.document(user.uid)
+                .update(User.FIELD_CHAT_ROOMS, FieldValue.arrayRemove(chatRoom.id))
+                .addOnCompleteListener {
+                    chatRoomDocumentReference
+                            .update(mapOf(
+                                    ChatRoom.FIELD_USERS to FieldValue.arrayRemove(user),
+                                    ChatRoom.FIELD_USER_IDS to FieldValue.arrayRemove(user.uid)
+                            ))
+                            .addOnCompleteListener {
+                                if (delete) {
+                                    coroutineScope.launch {
+                                        val messageCollection = chatRoomDocumentReference.collection(Collection.Messages)
+                                        deleteCollection(messageCollection, 10)
+                                        chatRoomDocumentReference.delete()
+                                    }
+                                }
+                                onComplete(it.exception)
+                            }
+                }
+    }
+
+    private fun deleteCollection(collection: CollectionReference, batchSize: Int) {
+        try {
+            // retrieve a small batch of documents to avoid out-of-memory errors
+            val future = collection.limit(batchSize.toLong()).get()
+            future.addOnSuccessListener {
+                var deleted = 0
+                val documents = it.documents
+
+                for (document in documents) {
+                    document.reference.delete()
+                    ++deleted
+                }
+
+                if (deleted >= batchSize)
+                    deleteCollection(collection, batchSize)
+            }
+        } catch (e: java.lang.Exception) {
+            System.err.println("Error deleting collection : " + e.message)
+        }
+    }
+
     fun userArrayUnion(uid: String, field: String, value: Any, onSuccess: (() -> Unit)? = null) {
         userCollectionReference.document(uid)
                 .update(field, FieldValue.arrayUnion(value))
@@ -244,6 +295,14 @@ class FireStoreHelper {
                             onMyChatRoomsSnapshotListener?.onException(NullPointerException("querySnapshot is null."))
                         }
                     }
+                }
+    }
+
+    fun unFriend(user: User, friend: User, onComplete: (exception: Exception?) -> Unit) {
+        userCollectionReference.document(user.uid)
+                .update(User.FIELD_FRIEND_IDS, FieldValue.arrayRemove(friend.uid))
+                .addOnCompleteListener {
+                    onComplete(it.exception)
                 }
     }
 

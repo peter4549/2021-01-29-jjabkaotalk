@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
@@ -16,17 +17,22 @@ import com.grand.duke.elliot.jjabkaotalk.base.BaseFragment
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.databinding.FragmentFriendsBinding
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import com.grand.duke.elliot.jjabkaotalk.main.TabFragmentDirections
 import com.grand.duke.elliot.jjabkaotalk.settings.SettingsActivity
 
-class FriendsFragment: BaseFragment() {
+class FriendsFragment: BaseFragment(), FriendAdapter.OnItemClickListener {
 
     private lateinit var viewModel: FriendsViewModel
     private lateinit var binding: FragmentFriendsBinding
-    private val friendsAdapter = FriendAdapter()
+    private val friendsAdapter = FriendAdapter().apply {
+        setOnItemClickListener(this@FriendsFragment)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         viewModel = ViewModelProvider(viewModelStore, FriendsViewModelFactory())[FriendsViewModel::class.java]
         binding = FragmentFriendsBinding.inflate(inflater, container, false)
+
+        binding.textFriend.text = getString(R.string.friends)
 
         setOnOptionsMenu(binding.toolbar, R.menu.menu_friends_fragment, arrayOf(
                 R.id.item_settings to {
@@ -36,12 +42,15 @@ class FriendsFragment: BaseFragment() {
 
         MainApplication.user.observe(viewLifecycleOwner, Observer { user ->
             user?.let {
+                showToast(user.friendIds.toString())
                 updateUi(it)
                 viewModel.update(it)
             }
         })
 
         viewModel.friends.observe(viewLifecycleOwner, Observer { friends ->
+            val text = getString(R.string.friends) + " ${friends.count()}"
+            binding.textFriend.text = text
             binding.recyclerView.apply {
                 adapter = friendsAdapter
                 layoutManager = LinearLayoutManager(requireContext())
@@ -90,5 +99,11 @@ class FriendsFragment: BaseFragment() {
                 return instance
             }
         }
+    }
+
+    override fun onItemClick(friend: User) {
+        findNavController().navigate(
+                TabFragmentDirections.actionTabFragmentToFriendProfileFragment(friend)
+        )
     }
 }

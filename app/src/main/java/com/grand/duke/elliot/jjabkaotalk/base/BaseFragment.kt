@@ -7,9 +7,9 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-
 
 open class BaseFragment: Fragment() {
 
@@ -17,6 +17,9 @@ open class BaseFragment: Fragment() {
     private var onBackPressed: (() -> Unit)? = null
     private var onHomePressed: (() -> Unit)? = null
     private var optionsItemIdToOnSelected = mutableMapOf<Int, () -> Unit>()
+
+    private var searchViewItemId: Int? = null
+    private var onQueryTextListener: SearchView.OnQueryTextListener? = null
 
     protected fun setOnBackPressed(onBackPressed: () -> Unit) {
         this.onBackPressed = onBackPressed
@@ -54,16 +57,26 @@ open class BaseFragment: Fragment() {
         setHasOptionsMenu(true)
         this.menuRes = menuRes
         optionsItemIdToOnSelected.forEach {
-            println("LLLLLLL: ${it.first}")
             if (this.optionsItemIdToOnSelected.keys.notContains(it.first))
                 this.optionsItemIdToOnSelected[it.first] = it.second
         }
     }
 
+    protected fun setupSearchView(searchViewItemId: Int, onQueryTextListener: SearchView.OnQueryTextListener) {
+        this.searchViewItemId = searchViewItemId
+        this.onQueryTextListener = onQueryTextListener
+    }
+
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         menu.clear()
-        menuRes?.let { inflater.inflate(it, menu) }
+        menuRes?.let {
+            inflater.inflate(it, menu)
+
+            searchViewItemId?.let { searchViewItemId ->
+                (menu.findItem(searchViewItemId).actionView as? SearchView)?.setOnQueryTextListener(onQueryTextListener)
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

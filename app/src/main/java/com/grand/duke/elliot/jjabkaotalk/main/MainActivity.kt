@@ -2,8 +2,10 @@ package com.grand.duke.elliot.jjabkaotalk.main
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
@@ -27,7 +29,8 @@ import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleItem
 import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleListDialogFragment
 import timber.log.Timber
 
-class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshotListener, SimpleListDialogFragment.FragmentContainer{
+class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshotListener,
+        SimpleListDialogFragment.FragmentContainer{
 
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: ActivityMainBinding
@@ -38,6 +41,9 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         viewModel = ViewModelProvider(this, MainViewModelFactory())[MainViewModel::class.java]
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.statusBarColor = MainApplication.secondaryColor
 
         setupAuthStateListener()
     }

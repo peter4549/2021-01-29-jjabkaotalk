@@ -13,6 +13,7 @@ import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.databinding.FragmentOpenChatRoomCreationDialogBinding
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import com.grand.duke.elliot.jjabkaotalk.util.DefaultLocation
 import com.grand.duke.elliot.jjabkaotalk.util.hashString
 
 class ChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpenChatRoomListener {
@@ -20,14 +21,29 @@ class ChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpe
     private lateinit var binding: FragmentOpenChatRoomCreationDialogBinding
     private lateinit var uid: String
     private lateinit var user: User
+    private lateinit var location: String
     private val fireStoreHelper = FireStoreHelper()
 
+    fun setLocation(location: String) {
+        this.location = location
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_LOCATION, location)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        if (savedInstanceState != null)
+            location = savedInstanceState.getString(KEY_LOCATION, DefaultLocation)
+
         binding = FragmentOpenChatRoomCreationDialogBinding.inflate(inflater, container, false)
 
         fireStoreHelper.setOnSetOpenChatRoomListener(this)
         user = MainApplication.user.value ?: throw NullPointerException("MainApplication.user?.uid is null.")
         uid = user.uid
+
+        binding.textLocation.text = location
 
         binding.buttonCancel.setOnClickListener {
             dismiss()
@@ -66,7 +82,7 @@ class ChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpe
                 id = id,
                 name = name,
                 lastMessage = chatMessage,
-                location = "busan", // todo. change here.
+                location = location, // todo. change here.
                 unreadCounter = mutableMapOf(uid to 0),
                 users = mutableListOf(user),
                 userIds = mutableListOf(uid),
@@ -81,5 +97,10 @@ class ChatRoomCreationDialogFragment: DialogFragment(), FireStoreHelper.OnSetOpe
 
     override fun onFailure() {
         Toast.makeText(requireContext(), getString(R.string.failed_to_create_open_chat_room), Toast.LENGTH_LONG).show()
+    }
+
+    companion object {
+        private const val KEY_LOCATION = "com.grand.duke.elliot.jjabkaotalk.chat.room" +
+                ".ChatRoomCreationDialogFragment.KEY_LOCATION"
     }
 }

@@ -3,6 +3,7 @@ package com.grand.duke.elliot.jjabkaotalk.chat.room
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Filter
 import android.widget.ImageView
 import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.DiffUtil
@@ -27,6 +28,8 @@ class ChatRoomAdapter(private val type: Int): ListAdapter<AdapterItem, ChatRoomA
 ) {
     private lateinit var recyclerView: RecyclerView
     private var onItemClickListener: OnItemClickListener? = null
+    private var searchWord = blank
+    private var chatRoomList = arrayListOf<ChatRoom>()
 
     fun setOnItemClickListener(onItemClickListener: OnItemClickListener) {
         this.onItemClickListener = onItemClickListener
@@ -164,12 +167,49 @@ class ChatRoomAdapter(private val type: Int): ListAdapter<AdapterItem, ChatRoomA
             Glide.with(imageView.context)
                 .load(uri)
                 .centerCrop()
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
                 .placeholder(R.drawable.ic_round_account_circle_96)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .transform(CircleCrop())
                 .into(imageView)
+        }
+    }
+
+    private fun filtering(item: ChatRoom): ChatRoom? {
+        if (item.name.contains(searchWord))
+            return item
+
+        return null
+    }
+
+    fun filter(): Filter {
+        var itemsFiltered: MutableList<ChatRoom>
+
+        return object : Filter() {
+            override fun performFiltering(charSequence: CharSequence?): FilterResults {
+                searchWord = charSequence.toString()
+                itemsFiltered =
+                        if (searchWord.isBlank())
+                            chatRoomList
+                        else {
+                            val itemsFiltering = mutableListOf<ChatRoom>()
+
+                            for (item in chatRoomList)
+                                filtering(item)?.let { itemsFiltering.add(it) }
+
+                            itemsFiltering
+                        }
+
+                return FilterResults().apply {
+                    values = itemsFiltered
+                }
+            }
+
+            override fun publishResults(charSequence: CharSequence?, results: FilterResults?) {
+                @Suppress("UNCHECKED_CAST")
+                results?.values?.let { values ->
+                    submitListInFilter(values as List<ChatRoom>)
+                }
+            }
         }
     }
 
@@ -184,9 +224,33 @@ class ChatRoomAdapter(private val type: Int): ListAdapter<AdapterItem, ChatRoomA
     }
 
     fun addDateAndSubmitList(list: List<ChatRoom>) {
-        if (list.isNullOrEmpty())
-            return
+        sort(list)
 
+        val items = arrayListOf<AdapterItem>()
+        var yearMonth = blank
+
+        for ((index, item) in list.withIndex()) {
+            item.time.toDateFormat(
+                    recyclerView.context.getString(R.string.year_month_date_format)
+            ).let {
+                if (it != yearMonth) {
+                    yearMonth = it
+                    items.add(AdapterItem.DateItem(index.toString(), yearMonth))
+                }
+            }
+
+            items.add(AdapterItem.OpenChatRoomItem(item.id, item))
+        }
+
+        chatRoomList.clear()
+        val chatRoomItemList = items.filterIsInstance<AdapterItem.OpenChatRoomItem>()
+        chatRoomList.addAll(chatRoomItemList.map { it.chatRoom })
+
+        recyclerView.scheduleLayoutAnimation()
+        submitList(items)
+    }
+
+    private fun submitListInFilter(list: List<ChatRoom>) {
         sort(list)
 
         val items = arrayListOf<AdapterItem>()

@@ -9,6 +9,8 @@ import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import com.grand.duke.elliot.jjabkaotalk.util.DefaultLocation
+import com.grand.duke.elliot.jjabkaotalk.util.blank
 import timber.log.Timber
 
 class ChatRoomsViewModel: ViewModel(), FireStoreHelper.OnOpenChatRoomSnapshotListener {
@@ -23,9 +25,11 @@ class ChatRoomsViewModel: ViewModel(), FireStoreHelper.OnOpenChatRoomSnapshotLis
     val exception: LiveData<Exception>
         get() = _exception
 
-    fun registerChatRoomSnapshotListener(user: User): ListenerRegistration {
+    var location = blank
+
+    fun registerChatRoomSnapshotListener(location: String): ListenerRegistration {
         fireStoreHelper.setOnOpenChatRoomSnapshotListener(this)
-        return fireStoreHelper.registerOpenChatRoomSnapshotListener("busan") // todo. test city.
+        return fireStoreHelper.registerOpenChatRoomSnapshotListener(location)
     }
 
     /** FireStoreHelper.OnOpenChatRoomSnapshotListener */

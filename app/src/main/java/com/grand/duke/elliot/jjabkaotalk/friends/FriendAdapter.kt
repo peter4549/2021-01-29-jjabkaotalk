@@ -16,7 +16,17 @@ import com.grand.duke.elliot.jjabkaotalk.databinding.ItemFriendBinding
 
 class FriendAdapter: ListAdapter<User, FriendAdapter.ViewHolder>(AdapterItemDiffCallback()) {
 
-    class ViewHolder(private val binding: ViewDataBinding): RecyclerView.ViewHolder(binding.root) {
+    private var onItemClickListener: OnItemClickListener? = null
+
+    fun setOnItemClickListener(onItemClickListener: OnItemClickListener) {
+        this.onItemClickListener = onItemClickListener
+    }
+
+    interface OnItemClickListener {
+        fun onItemClick(friend: User)
+    }
+
+    inner class ViewHolder(private val binding: ViewDataBinding): RecyclerView.ViewHolder(binding.root) {
 
         fun bind(friend: User) {
             binding as ItemFriendBinding
@@ -34,6 +44,9 @@ class FriendAdapter: ListAdapter<User, FriendAdapter.ViewHolder>(AdapterItemDiff
             }
 
             binding.textName.text = friend.name
+            binding.root.setOnClickListener {
+                onItemClickListener?.onItemClick(friend)
+            }
         }
     }
 

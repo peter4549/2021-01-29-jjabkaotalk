@@ -43,6 +43,12 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
         chatRoom = chatFragmentArgs.chatRoom  // Initial value.
         binding.toolbar.title = chatRoom.name
 
+        setOnOptionsMenu(binding.toolbar, R.menu.menu_chat, arrayOf (
+                R.id.item_exit to {
+                    leaveChatRoom(user, chatRoom)
+                })
+        )
+
         viewModel = ViewModelProvider(viewModelStore, ChatMessagesViewModelFactory(chatRoom))[ChatMessagesViewModel::class.java]
         chatMessageAdapter = ChatMessageAdapter(chatRoom).apply {
             setOnItemClickListener(this@ChatMessagesFragment)
@@ -148,6 +154,18 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
             senderId = user.uid,
             time = time
         )
+
+    private fun leaveChatRoom(user: User, chatRoom: ChatRoom) {
+        var delete = false
+
+        if (chatRoom.users.count() < 2)
+            delete = true
+
+        viewModel.fireStoreHelper.leaveChatRoom(user, chatRoom, delete) {
+            it?.message?.let { message -> showToast(message) }
+            requireActivity().onBackPressed()
+        }
+    }
 
     override fun onStop() {
         super.onStop()

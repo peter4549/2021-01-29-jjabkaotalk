@@ -9,22 +9,39 @@ import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 class FriendsViewModel: ViewModel() {
 
     private val fireStoreHelper = FireStoreHelper()
-    private val friendIds = mutableListOf<String>()
+    private val existingFriendIds = mutableListOf<String>()
 
-    private val _friends = MutableLiveData<List<User>>()
-    val friends: LiveData<List<User>>
+    private val _friends = MutableLiveData<MutableList<User>>()
+    val friends: LiveData<MutableList<User>>
         get() = _friends
 
     fun update(user: User) {
-        if (friendIds.isEmpty()) {
-            friendIds.addAll(user.friendIds.map { it }.toMutableList())
+        if (existingFriendIds.isEmpty()) {
+            existingFriendIds.addAll(user.friendIds.map { it }.toMutableList())
+            fireStoreHelper.getUsers(existingFriendIds) { users ->
+                _friends.value = users as MutableList<User>
+            }
         } else {
-            friendIds.addAll(friendIds.minus(user.friendIds))
-            friendIds.removeAll(user.friendIds.minus(friendIds))
-        }
+            // Added.
+            if (user.friendIds.count() > existingFriendIds.count()) {
+                val new = user.friendIds.minus(existingFriendIds)
+                fireStoreHelper.getUsers(new) { users ->
+                    val existingUsers = friends.value
+                    existingUsers?.addAll(users)
+                    _friends.value = existingUsers
+                }
+            }
 
-        fireStoreHelper.getUsers(friendIds) { users ->
-            _friends.value = users
+            // Deleted.
+            if (user.friendIds.count() < existingFriendIds.count()) {
+                val deleted: List<String> = existingFriendIds.minus(user.friendIds)
+                fireStoreHelper.getUsers(deleted) {
+                    val existingUsers = friends.value
+                    existingUsers?.removeAll(it)
+                    _friends.value = existingUsers
+                }
+
+            }
         }
     }
 }

@@ -5,11 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.DialogFragment
+import androidx.appcompat.widget.SearchView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -23,14 +19,14 @@ import com.grand.duke.elliot.jjabkaotalk.databinding.FragmentOpenChatRoomsBindin
 import com.grand.duke.elliot.jjabkaotalk.main.MainActivity
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
 import com.grand.duke.elliot.jjabkaotalk.main.TabFragmentDirections
-import com.grand.duke.elliot.jjabkaotalk.profile.ProfileCreationActivity
 import com.grand.duke.elliot.jjabkaotalk.settings.SettingsActivity
+import com.grand.duke.elliot.jjabkaotalk.util.DefaultLocation
 import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.isNull
 import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleItem
 import com.grand.duke.elliot.jjabkaotalk.util.view.SimpleListDialogFragment
 
-class ChatRoomsFragment: BaseFragment() {
+class ChatRoomsFragment: BaseFragment(), SearchView.OnQueryTextListener {
 
     private lateinit var viewModel: ChatRoomsViewModel
     private lateinit var binding: FragmentOpenChatRoomsBinding
@@ -47,14 +43,19 @@ class ChatRoomsFragment: BaseFragment() {
         binding = FragmentOpenChatRoomsBinding.inflate(inflater, container, false)
 
         binding.toolbar.title = blank
+        binding.textLocation.text = MainApplication.location.value ?: DefaultLocation
         initLocationSelector()
+
+        setupSearchView(R.id.item_search, this)
 
         setOnOptionsMenu(
                 binding.toolbar,
                 R.menu.menu_open_chat_rooms,
                 arrayOf(
                         R.id.item_create_open_chat_room to {
-                            ChatRoomCreationDialogFragment().show(requireActivity().supportFragmentManager, null)
+                            ChatRoomCreationDialogFragment()
+                                    .apply { setLocation(viewModel.location) }
+                                    .show(requireActivity().supportFragmentManager, null)
                         },
                         R.id.item_settings to {
                             startSettingsActivity()
@@ -65,25 +66,8 @@ class ChatRoomsFragment: BaseFragment() {
         /** User. */
         MainApplication.user.observe(viewLifecycleOwner, Observer { user ->
             user?.let {
-                if (listenerRegistration.isNull()) {
-                    listenerRegistration = viewModel.registerChatRoomSnapshotListener(user)
-                    chatRoomAdapter = ChatRoomAdapter(ChatRoomAdapter.Type.public)
-                    chatRoomAdapter?.setOnItemClickListener(object :
-                        ChatRoomAdapter.OnItemClickListener {
-                        override fun onClick(chatRoom: ChatRoom) {
-                            findNavController().navigate(
-                                TabFragmentDirections.actionTabFragmentToOpenChatFragment(
-                                    chatRoom
-                                )
-                            )
-                        }
-                    })
-
-                    binding.recyclerView.apply {
-                        adapter = chatRoomAdapter
-                        layoutManager = LinearLayoutManager(requireContext())
-                    }
-                }
+                val location = MainApplication.location.value
+                MainApplication.location.value = location
             } ?: run {
                 clear()
             }
@@ -92,8 +76,34 @@ class ChatRoomsFragment: BaseFragment() {
 
         /** Location. */
         MainApplication.location.observe(viewLifecycleOwner, Observer {
-            it?.let {
-                binding.textLocation.text = it
+            if (MainApplication.user.value == null)
+                return@Observer
+
+            if (viewModel.location == it)
+                return@Observer
+
+            viewModel.location = it
+            clear()
+            binding.textLocation.text = it
+
+            if (listenerRegistration.isNull()) {
+                listenerRegistration = viewModel.registerChatRoomSnapshotListener(it)
+                chatRoomAdapter = ChatRoomAdapter(ChatRoomAdapter.Type.public)
+                chatRoomAdapter?.setOnItemClickListener(object :
+                        ChatRoomAdapter.OnItemClickListener {
+                    override fun onClick(chatRoom: ChatRoom) {
+                        findNavController().navigate(
+                                TabFragmentDirections.actionTabFragmentToOpenChatFragment(
+                                        chatRoom
+                                )
+                        )
+                    }
+                })
+
+                binding.recyclerView.apply {
+                    adapter = chatRoomAdapter
+                    layoutManager = LinearLayoutManager(requireContext())
+                }
             }
         })
 
@@ -174,5 +184,15 @@ class ChatRoomsFragment: BaseFragment() {
                 return instance
             }
         }
+    }
+
+    /** Search View. */
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        return false
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        chatRoomAdapter?.filter()?.filter(newText)
+        return true
     }
 }

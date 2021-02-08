@@ -7,6 +7,7 @@ import com.google.firebase.firestore.*
 import com.google.gson.Gson
 import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
 import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
+import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.firebase.Collection
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.firebase.isNotNull
