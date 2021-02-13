@@ -7,13 +7,12 @@ import com.google.firebase.firestore.*
 import com.google.gson.Gson
 import com.grand.duke.elliot.jjabkaotalk.data.ChatMessage
 import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
-import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.firebase.Collection
 import com.grand.duke.elliot.jjabkaotalk.firebase.FireStoreHelper
 import com.grand.duke.elliot.jjabkaotalk.firebase.isNotNull
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import com.grand.duke.elliot.jjabkaotalk.util.blank
 import org.json.JSONObject
-import org.w3c.dom.DocumentType
 import timber.log.Timber
 
 class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
@@ -28,6 +27,7 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
     val chatMessageCollectionReference: CollectionReference = openChatRoomDocumentReference.collection(Collection.Messages)
 
     init {
+        MainApplication.currentChatRoomId = chatRoom.id
         setChatMessageSnapshotListener(chatRoom)
         chatRoomSnapshotListenerRegistration = registerChatRoomSnapshotListener()
     }
@@ -184,6 +184,7 @@ class ChatMessagesViewModel(chatRoom: ChatRoom): ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
+        MainApplication.currentChatRoomId = blank
         removeListenerRegistration()
     }
 

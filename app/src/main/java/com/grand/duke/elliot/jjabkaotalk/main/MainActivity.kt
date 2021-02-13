@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.findNavController
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -17,6 +18,10 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.chat.mine.MyChatRoomsFragment
 import com.grand.duke.elliot.jjabkaotalk.chat.room.ChatRoomsFragment
+import com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CLICK_ACTION
+import com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CloudMessagingHelper
+import com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CloudMessagingService
+import com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CloudMessagingService.Companion.EXTRA_NAME_CHAT_ROOM_ID
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.grand.duke.elliot.jjabkaotalk.data.User.Companion.FIELD_TOKEN
 import com.grand.duke.elliot.jjabkaotalk.databinding.ActivityMainBinding
@@ -52,6 +57,20 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
         super.onDestroy()
         if (this::listenerRegistration.isInitialized)
             listenerRegistration.remove()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent?.action != null) {
+            when (intent.action) {
+                CloudMessagingService.ACTION_CHAT_NOTIFICATION -> {
+                    val chatRoomId =
+                        intent.getStringExtra(EXTRA_NAME_CHAT_ROOM_ID)
+                    if (chatRoomId != null && chatRoomId.isNotBlank())
+                        enterChatRoom(chatRoomId)
+                }
+            }
+        }
     }
 
     private fun setupAuthStateListener() {
@@ -92,6 +111,8 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
     override fun onUserDocumentSnapshot(user: User) {
         MainApplication.user.value = user
         updateToken(user)
+        val chatRoomId = intent.getStringExtra(EXTRA_NAME_CHAT_ROOM_ID) ?: return
+        enterChatRoom(chatRoomId)
     }
 
     override fun onNoUserDocumentSnapshot() {
@@ -137,11 +158,19 @@ class MainActivity : AppCompatActivity(), FireStoreHelper.OnUserDocumentSnapshot
         startActivity(intent)
     }
 
-    private fun FirebaseUser?.isNotNull() = this != null
+    private fun enterChatRoom(chatRoomId: String) {
+        fireStoreHelper.getChatRoom(chatRoomId) { chatRoom ->
+            chatRoom?.let {
+                if (MainApplication.currentChatRoomId.isNotBlank())
+                    supportFragmentManager.popBackStackImmediate()
 
-    private fun showToast(text: String, duration: Int = Toast.LENGTH_LONG) {
-        Toast.makeText(this, text, duration).show()
+                findNavController(R.id.nav_host_fragment)
+                    .navigate(TabFragmentDirections.actionTabFragmentToOpenChatFragment(it))
+            }
+        }
     }
+
+    private fun FirebaseUser?.isNotNull() = this != null
 
     companion object {
         private const val REQUEST_CODE_SIGN_IN_ACTIVITY = 139

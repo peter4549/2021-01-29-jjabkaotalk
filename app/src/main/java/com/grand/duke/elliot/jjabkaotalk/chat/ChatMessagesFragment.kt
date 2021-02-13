@@ -169,6 +169,7 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
 
     override fun onStop() {
         super.onStop()
+
         // Update unreadCounter.
         chatRoom.unreadCounter[user.uid] = 0
         viewModel.openChatRoomDocumentReference
@@ -182,7 +183,7 @@ class ChatMessagesFragment: BaseFragment(), ChatMessageAdapter.OnItemClickListen
     }
 
     override fun onChatMessageLongClick(chatMessage: ChatMessage) {
-        // TODO make simple list dialog.
+
     }
 
     override fun onProfileImageClick(sender: User) {

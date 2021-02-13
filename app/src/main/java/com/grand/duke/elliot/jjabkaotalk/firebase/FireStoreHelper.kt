@@ -306,6 +306,14 @@ class FireStoreHelper {
                 }
     }
 
+    fun getChatRoom(id: String, onSuccess: ((chatRoom: ChatRoom?) -> Unit)?) {
+        openChatRoomCollectionReference.document(id).get().addOnSuccessListener { documentSnapshot ->
+            documentSnapshot.data?.let { data ->
+                onSuccess?.invoke(convertToChatRoom(data))
+            }
+        }
+    }
+
     fun getMyChatRooms(user: User, onSuccess: ((List<ChatRoom>) -> Unit)? = null) {
         val chatRoomIds = user.chatRooms
         val chatRooms = mutableListOf<ChatRoom>()

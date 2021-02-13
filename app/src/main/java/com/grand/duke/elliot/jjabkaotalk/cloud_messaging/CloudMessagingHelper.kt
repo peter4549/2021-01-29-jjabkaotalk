@@ -1,5 +1,6 @@
 package com.grand.duke.elliot.jjabkaotalk.cloud_messaging
 
+import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.data.ChatRoom
 import com.grand.duke.elliot.jjabkaotalk.data.User
 import com.squareup.okhttp.ResponseBody
@@ -23,10 +24,12 @@ class CloudMessagingHelper {
             .map { it.token }
 
         val cloudMessage = CloudMessage(tokens)
+
         cloudMessage.notification.title = sender.name
         cloudMessage.notification.body = message
-        cloudMessage.notification.click_action = "action.ad.astra.cloud.message.click"
+        cloudMessage.notification.click_action = CLICK_ACTION
         cloudMessage.notification.tag = chatRoom.id
+        cloudMessage.notification.icon = "myicon"
 
         cloudMessage.data.message = message
         cloudMessage.data.chatRoomId = chatRoom.id

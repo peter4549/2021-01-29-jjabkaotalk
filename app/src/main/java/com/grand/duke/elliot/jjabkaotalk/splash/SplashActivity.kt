@@ -4,12 +4,16 @@ import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.navigation.findNavController
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.grand.duke.elliot.jjabkaotalk.R
 import com.grand.duke.elliot.jjabkaotalk.base.BaseActivity
+import com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CLICK_ACTION
+import com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CloudMessagingService
 import com.grand.duke.elliot.jjabkaotalk.main.MainActivity
 import com.grand.duke.elliot.jjabkaotalk.main.MainApplication
+import com.grand.duke.elliot.jjabkaotalk.main.TabFragmentDirections
 import com.grand.duke.elliot.jjabkaotalk.util.blank
 import com.grand.duke.elliot.jjabkaotalk.util.lightenColor
 import timber.log.Timber
@@ -49,6 +53,13 @@ class SplashActivity: BaseActivity() {
         firebaseRemoteConfig.setDefaultsAsync(R.xml.remote_config)
         firebaseRemoteConfig.fetchAndActivate()
             .addOnCompleteListener(this) { task ->
+                val mainIntent = Intent(this, MainActivity::class.java)
+                if (intent.action == CLICK_ACTION) {
+                    val chatRoomId = intent.extras?.get("chatRoomId").toString()
+                    mainIntent.putExtra(CloudMessagingService.EXTRA_NAME_CHAT_ROOM_ID, chatRoomId)
+                }
+
+
                 if (task.isSuccessful) {
                     /**
                      * Keys:
@@ -64,11 +75,11 @@ class SplashActivity: BaseActivity() {
                         firebaseRemoteConfig.getString("notification_message")
 
                     latestVersionName = versionName
-                    startActivity(Intent(this, MainActivity::class.java))
+                    startActivity(mainIntent)
                     finish()
                 } else {
                     Timber.e(task.exception)
-                    startActivity(Intent(this, MainActivity::class.java))
+                    startActivity(mainIntent)
                     finish()
                 }
             }

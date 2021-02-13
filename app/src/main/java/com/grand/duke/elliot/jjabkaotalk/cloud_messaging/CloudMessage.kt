@@ -13,6 +13,7 @@ data class CloudMessage(val registration_ids: List<String>) {
         var click_action: String = blank
         var tag: String = blank
         var title: String = blank
+        var icon: String = blank
     }
 
     class Data {

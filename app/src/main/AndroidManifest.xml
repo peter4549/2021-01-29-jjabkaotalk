@@ -13,18 +13,23 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.JJabKaoTalk">
-        <activity android:name=".main.MainActivity" />
+
+        <activity android:name=".main.MainActivity"
+            android:launchMode="singleTask"/>
 
         <activity android:name=".splash.SplashActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="com.grand.duke.elliot.jjabkaotalk.cloud_messaging.CLICK_ACTION" />
 
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <activity android:name=".sign_in.SignInActivity"
+            android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|uiMode"/>
 
         <activity android:name=".profile.ProfileCreationActivity" />
